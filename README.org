@@ -1,0 +1,79 @@
+* gptel-tool-library                                                  :TOC_4:
+  - [[#introduction][Introduction]]
+  - [[#contributing][Contributing]]
+
+** Introduction
+
+This repository contains multiple tools for LLM use through [[https://github.com/karthink/gptel][gptel]]. Tools are grouped into modules. The main library just sets up loading and unloading. The following screenshot shows a session with safe and maybe-safe tools from the emacs and buffer modules loaded:
+
+#+CAPTION: An emacs frame asking gptel for time, giraffe ascii art, and putting an emoji at a specific buffer position
+[[./pictures/demo.png]]
+
+To install, clone this directory, add it to your load path, and require =gptel-tool-library=. You also probably want to load one or more modules:
+
+#+BEGIN_SRC elisp
+  (add-to-list 'load-path "/path/to/clone")
+  (require 'gptel-tool-library)
+  ;; set this if you want to use maybe safe functions (recommended)
+  ;;(setq gptel-tool-library-use-maybe-safe t)
+  ;; set this if you also want to use unsafe functions
+  ;;(setq gptel-tool-library-use-unsafe t)
+  (dolist (module '("bbdb" "buffer" "elisp" "emacs" "gnus" "os"))
+    (gptel-tool-library-load-module module)))
+#+END_SRC
+
+Now you can load modules with =(gptel-tool-library-load-module "<buffer>")=, and unload them with =(gptel-tool-library-load-module "<module>")=. The load will:
+
+- load the file with the module definition
+- enable all safe tools for use with your LLM. You can set =gptel-tool-library-use= to =nil= if you prefer just loading safe tool without enabling them
+- create most likely safe tools, but only enable them if =gptel-tool-library-use-maybe-safe= has been set to =t=
+- create unsafe tools, but only enable them if =gptel-tool-library-use-unsafe= has been set to =t=
+
+Most likely safe tools are unlikely to cause damage, have not been observed to do so, and if they did cause damage would make it easy to revert (i.e., undo clearing a buffer).
+
+Unsafe tools can cause damage or unintended behaviour, but all of them prompt before execution (the others don't) - so it is also safe to have them enabled, but you may chose not to for avoiding unnecessary prompts.
+
+Tools loaded, but not enabled can be manually enabled from gptels tool menu.
+
+The unload function will disable all tools from that module, and remove them from gptel, i.e., after that you also won't be able to manually enable them, until you load them again.
+
+If =gptel-tool-library-debug= is set to =t= (currently default) tool invocations will be logged to =gptel-tool-library-debug-buffer= (default: =*gptel-tool-debug*=), which is quite useful to follow what the LLM is trying to do.
+
+Currently pretty much the only other starting point for gptel tools is  [[https://git.bajsicki.com/phil/gptel-org-tools][gptel-org-tools]], and the following functions either are copies or variants of functions defined there: read-file-contents, list-buffers, describe-variable and describe-function. Additionally, many tool descriptions are inspired on the descriptions from there.
+
+** Contributing
+
+Pull requests are welcome - both to expand existing modules, or adding new ones.
+
+If you edit this README please make sure you have [[https://github.com/snosov1/toc-org][toc-org]] installed and loaded.
+
+A module =module= must:
+
+- be named gptel-tool-library-module, in gptel-tool-library-module.el
+- =provide= gptel-tool-library-module
+- =defvar= gptel-tool-library-module-tools, gptel-tool-library-module-tools-maybe-unsafe and gptel-tool-library-module-tools-unsafe as ='()=
+- define helper functions in the gptel-tool-library-module- namespace, and define them as tools with a category matching or derived from =module=
+
+The tool definition should look similar to this:
+
+#+BEGIN_SRC elisp
+  (add-to-list 'gptel-tool-library-buffer-tools
+               (gptel-make-tool
+                :function #'gptel-tool-library-buffer--read-buffer-contents
+                :name  "gptel-tool-library-buffer--read-buffer-contents"
+                :description "Read a buffers contents. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
+                :args (list '(:name "buffer"
+                                    :type string
+                                    :description "The buffer to retrieve contents from."))
+                :category "emacs-buffer"))
+#+END_SRC
+
+The tool should become member of one of the three lists defined earlier, depending on how safe it is. For example:
+
+- reading a buffer is absolutely safe, and should go to the main list, which enables the tools when loading the module
+- writing to a buffer or clearing a buffer is most likely safe - LLMs are unlikely to use them on arbitrary buffers, and even if they do, it can be reverted. So that goes to the maybe safe list.
+- evaluating arbitrary elisp goes to the unsafe list, as LLMS can and will do stupid things with that
+
+Tools must not prompt for confirmation - unless they're on the unsafe list, in which case they must prompt.
+
+A helper function should typically start by calling =gptel-tool-library--debug-log= with its name and arguments - that way a user can trace what the LLM is trying to do.
