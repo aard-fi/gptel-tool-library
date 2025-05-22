@@ -1,5 +1,6 @@
 * gptel-tool-library                                                  :TOC_4:
   - [[#introduction][Introduction]]
+  - [[#out-of-tree-modules][Out-of-tree modules]]
   - [[#contributing][Contributing]]
 
 ** Introduction
@@ -40,6 +41,15 @@ The unload function will disable all tools from that module, and remove them fro
 If =gptel-tool-library-debug= is set to =t= (currently default) tool invocations will be logged to =gptel-tool-library-debug-buffer= (default: =*gptel-tool-debug*=), which is quite useful to follow what the LLM is trying to do.
 
 Currently pretty much the only other starting point for gptel tools is  [[https://git.bajsicki.com/phil/gptel-org-tools][gptel-org-tools]], and the following functions either are copies or variants of functions defined there: read-file-contents, list-buffers, describe-variable and describe-function. Additionally, many tool descriptions are inspired on the descriptions from there.
+
+** Out-of-tree modules
+
+As long as the module follows the specification described in the next section and is available in the load path it can be loaded/unloaded with this library. This is mainly interesting for bindings tightly coupled to and useless without a specific library.
+
+The following projects come with their own tool bindings via this library:
+
+- [[https://github.com/aard-fi/buffer-turtle][buffer-turtle]], a turtle drawing lines in any of your buffers
+- [[https://github.com/aard-fi/arch-installer][arch-installer]], the LLM of your choice struggling with an Arch Linux installation
 
 ** Contributing
 
