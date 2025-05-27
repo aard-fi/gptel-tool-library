@@ -25,20 +25,44 @@
 ;;
 ;;; Code:
 
+(defgroup gptel-tool-library nil
+  "gptel-tool-library settings"
+  :group 'gptel-tool-library)
+
 (defcustom gptel-tool-library-use t
-  "Use tools which are safe to use")
+  "Use tools which are safe to use"
+  :group 'gptel-tool-library
+  :type 'sexp)
 
 (defcustom gptel-tool-library-use-maybe-safe nil
-  "Use tools which are most likely safe to use")
+  "Use tools which are most likely safe to use"
+  :group 'gptel-tool-library
+  :type 'sexp)
 
 (defcustom gptel-tool-library-use-unsafe nil
-  "Use tools which are unsafe")
+  "Use tools which are unsafe"
+  :group 'gptel-tool-library
+  :type 'sexp)
 
-(defvar gptel-tool-library-debug t
-  "Log messages to `gptel-tool-library-debug-buffer' when non-nil`")
+(defcustom gptel-tool-library-gptel-tools-var 'gptel-tools
+  "Symbol of the variable holding the list of GPTel tools."
+  :group 'gptel-tool-library
+  :type 'symbol)
 
-(defvar gptel-tool-library-debug-buffer "*gptel-tool-debug*"
-  "Buffer for debug output, if debug logging is enabled via `gptel-tool-library-debug'")
+(defcustom gptel-tool-library-llm-tools-var nil
+  "Symbol of the variable holding the list of LLM tools."
+  :group 'gptel-tool-library
+  :type 'symbol)
+
+(defcustom gptel-tool-library-debug t
+  "Log messages to `gptel-tool-library-debug-buffer' when non-nil`"
+  :group 'gptel-tool-library
+  :type 'symbol)
+
+(defcustom gptel-tool-library-debug-buffer "*gptel-tool-debug*"
+  "Buffer for debug output, if debug logging is enabled via `gptel-tool-library-debug'"
+  :group 'gptel-tool-library
+  :type 'string)
 
 (defconst gptel-tool-library-dir (file-name-directory (or load-file-name
                                                           buffer-file-name)))
