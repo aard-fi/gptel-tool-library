@@ -25,6 +25,8 @@
 ;;
 ;;; Code:
 
+(require 'cl-lib)
+
 (defgroup gptel-tool-library nil
   "gptel-tool-library settings"
   :group 'gptel-tool-library)
@@ -72,6 +74,34 @@
   (let ((buffer (get-buffer-create gptel-tool-library-debug-buffer)))
     (with-current-buffer gptel-tool-library-debug-buffer
       (insert (format "%s\n" log)))))
+
+(defun gptel-tool-library-tool--accessor (tool slot)
+  "Return SLOT value from TOOL if TOOl is a known type and accessor exists, else nil.
+
+This helps us in providing a generic wrapper for the tool interfaces of the various
+LLM libraries"
+  (cond
+   ((and (cl-typep tool 'gptel-tool)
+         (fboundp (intern (format "gptel-tool-%s" slot))))
+    (funcall (intern (format "gptel-tool-%s" slot)) tool))
+   ((and (cl-typep tool 'llm-tool)
+         (fboundp (intern (format "llm-tool-%s" slot))))
+    (funcall (intern (format "llm-tool-%s" slot)) tool))
+   (t nil)))
+
+;; the following there are probably the ones we care about most for searching
+;; modified tools for removal
+(defun gptel-tool-library-tool-function (tool)
+  "Convenience binding to get the `function' slot out of a tool"
+  (gptel-tool-library-tool--accessor tool "function"))
+
+(defun gptel-tool-library-tool-name (tool)
+  "Convenience binding to get the `name' slot out of a tool"
+  (gptel-tool-library-tool--accessor tool "name"))
+
+(defun gptel-tool-library-tool-category (tool)
+  "Convenience binding to get the `category' slot out of a tool"
+  (gptel-tool-library-tool--accessor tool "category"))
 
 (defun gptel-tool-library-load-module (module-name)
   "Load library `gptel-tool-library-MODULE-NAME' and add its tools to `gptel-tools'."
