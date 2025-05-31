@@ -34,6 +34,9 @@ the LLM behaves.")
 (defvar gptel-tool-library-os-tools-unsafe '()
   "The list of OS related tools which are not safe.")
 
+(defvar gptel-tool-library-os-category-name "OS"
+  "The buffer category used for tool registration")
+
 (defun gptel-tool-library-os--run-shell (command)
   "Return output of SHELL COMMAND."
   (gptel-tool-library--debug-log (format "shell %s" command))

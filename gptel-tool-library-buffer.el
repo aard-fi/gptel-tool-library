@@ -36,6 +36,9 @@ the LLM behaves.")
 (defvar gptel-tool-library-buffer-tools-unsafe '()
   "The list of buffer related tools which are not safe.")
 
+(defvar gptel-tool-library-buffer-category-name "emacs-buffer"
+  "The buffer category used for tool registration")
+
 (defun gptel-tool-library-buffer--read-buffer-contents (buffer)
   "Return contents of BUFFER."
   (gptel-tool-library--debug-log (format "read-buffer-contents %s" buffer))
