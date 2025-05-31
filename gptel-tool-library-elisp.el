@@ -57,5 +57,83 @@ the LLM behaves.")
               :category "elisp"
               :confirm t))
 
+(defun gptel-tool-library-elisp--defun-region (function-name &optional buffer)
+  "Return a cons cell (START . END) with points just before and after FUNCTION-NAME defun in BUFFER.
+If BUFFER is nil, use the current buffer."
+  (with-current-buffer (or buffer (current-buffer))
+    (save-excursion
+      (goto-char (point-min))
+      (if (search-forward-regexp (concat "^(\\s-*defun\\s-+" (regexp-quote function-name) "\\_>") nil t)
+          (let (start end)
+            (beginning-of-defun)
+            (setq start (point))
+            (end-of-defun)
+            (setq end (point))
+            (cons start end))
+        (message "Function `%s` not found in buffer %s" function-name (buffer-name))
+        nil))))
+
+(add-to-list 'gptel-tool-library-elisp-tools
+             (gptel-make-tool
+              :function #'gptel-tool-library-elisp--defun-region
+              :name  "defun-region"
+              :description "Read starting end end point of a function definition."
+              :args (list '(:name "function"
+                                  :type string
+                                  :description "The name of the function to search.")
+                          '(:name "buffer"
+                                  :type string
+                                  :description "The buffer to search in"))
+              :category "elisp"))
+
+(defun gptel-tool-library-elisp--replace-defun-region (function-name new-string &optional buffer)
+  "Replace the entire region of FUNCTION-NAME with NEW-STRING in BUFFER or current buffer if omitted."
+  (let ((bounds (gptel-tool-library-elisp--defun-region function-name buffer)))
+    (if bounds
+        (with-current-buffer (or buffer (current-buffer))
+          (save-excursion
+            (goto-char (car bounds))
+            (delete-region (car bounds) (cdr bounds))
+            (insert new-string)))
+      (message "Function `%s` not found for replacement" function-name))))
+
+(defun gptel-tool-library-elisp--smerge-replace-defun-region (function-name new-string &optional buffer)
+  "Insert smerge-style conflict markers for FUNCTION-NAME region with NEW-STRING in BUFFER or current buffer."
+  (interactive "sFunction name: \nsNew function text: \nBBuffer (optional): ")
+  (let ((buf (or buffer (current-buffer)))
+        bounds old-text conflict-text)
+    (setq bounds (gptel-tool-library-elisp--defun-region function-name buf))
+    (if (not bounds)
+        (message "Function `%s` not found in buffer %s" function-name (buffer-name buf))
+      (with-current-buffer buf
+        (setq old-text (buffer-substring-no-properties (car bounds) (cdr bounds)))
+        (setq conflict-text
+              (concat "<<<<<<< FUNCTION BEFORE REPLACE\n"
+                      old-text
+                      "=======\n"
+                      new-string
+                      "\n>>>>>>> FUNCTION AFTER REPLACE\n"))
+        (goto-char (car bounds))
+        (delete-region (car bounds) (cdr bounds))
+        (insert conflict-text)
+        (smerge-mode 1)
+        (message "Inserted smerge-style conflict for function `%s`" function-name)))))
+
+(add-to-list 'gptel-tool-library-elisp-tools-maybe-safe
+             (gptel-make-tool
+              :function #'gptel-tool-library-elisp--smerge-replace-defun-region
+              :name  "smerge-replace-defun-region"
+              :description "Search for a function name, and replace the complete defun with a diff block. After calling this tool, stop. Then continue fulfilling user's request."
+              :args (list '(:name "function-name"
+                                  :type string
+                                  :description "The elisp code to evaluate.")
+                          '(:name "new-string"
+                                  :type string
+                                  :description "The new function definition")
+                          '(:name "buffer"
+                                  :type string
+                                  :description "The buffer to perform the replacement"))
+              :category "elisp"))
+
 (provide 'gptel-tool-library-elisp)
 ;;; gptel-tool-library-elisp.el ends here
