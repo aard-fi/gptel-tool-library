@@ -53,6 +53,29 @@ the LLM behaves.")
                                   :description "The buffer to retrieve contents from."))
               :category "emacs-buffer"))
 
+(defun gptel-tool-library-buffer--read-buffer-region (buffer from to)
+  "Return contents of BUFFER region from FROM to TO."
+  (gptel-tool-library--debug-log (format "read-buffer-region %s %s->%s" buffer from to))
+  (let ((buffer (get-buffer-create buffer)))
+    (with-current-buffer buffer
+      (concat (buffer-substring-no-properties from to)))))
+
+(add-to-list 'gptel-tool-library-buffer-tools
+             (gptel-make-tool
+              :function #'gptel-tool-library-buffer--read-buffer-region
+              :name  "read-buffer-region"
+              :description "Read a region of a buffer. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
+              :args (list '(:name "buffer"
+                                  :type string
+                                  :description "The buffer to retrieve contents from.")
+                          '(:name "from"
+                                  :type integer
+                                  :description "Start of the region to read.")
+                          '(:name "to"
+                                  :type integer
+                                  :description "End of the region to read."))
+              :category "emacs-buffer"))
+
 (defun gptel-tool-library-buffer--read-buffer-contents-since-last-read (buffer)
   "Return contents of BUFFER since last read, or all buffer on first read."
   (gptel-tool-library--debug-log (format "read-buffer-contents-since-last-read %s" buffer))
