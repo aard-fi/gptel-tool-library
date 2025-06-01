@@ -42,9 +42,10 @@ the LLM behaves.")
 (defun gptel-tool-library-buffer--read-buffer-contents (buffer)
   "Return contents of BUFFER."
   (gptel-tool-library--debug-log (format "read-buffer-contents %s" buffer))
-  (let ((buffer (get-buffer-create buffer)))
-    (with-current-buffer buffer
-      (concat (buffer-substring-no-properties (point-min) (point-max))))))
+  (gptel-tool-library--limit-result
+   (let ((buffer (get-buffer-create buffer)))
+     (with-current-buffer buffer
+       (concat (buffer-substring-no-properties (point-min) (point-max)))))))
 
 (gptel-tool-library-make-tools-and-register
  'gptel-tool-library-buffer-tools
@@ -59,9 +60,10 @@ the LLM behaves.")
 (defun gptel-tool-library-buffer--read-buffer-region (buffer from to)
   "Return contents of BUFFER region from FROM to TO."
   (gptel-tool-library--debug-log (format "read-buffer-region %s %s->%s" buffer from to))
-  (let ((buffer (get-buffer-create buffer)))
-    (with-current-buffer buffer
-      (concat (buffer-substring-no-properties from to)))))
+  (gptel-tool-library--limit-result
+   (let ((buffer (get-buffer-create buffer)))
+     (with-current-buffer buffer
+       (concat (buffer-substring-no-properties from to))))))
 
 (gptel-tool-library-make-tools-and-register
  'gptel-tool-library-buffer-tools
@@ -79,6 +81,8 @@ the LLM behaves.")
                      :description "End of the region to read."))
  :category "emacs-buffer")
 
+;; TODO - we should also limit result here, but instead of throwing an error it'd
+;;        probably bet better to do only partial reads if we'd exceed the result limit
 (defun gptel-tool-library-buffer--read-buffer-contents-since-last-read (buffer)
   "Return contents of BUFFER since last read, or all buffer on first read."
   (gptel-tool-library--debug-log (format "read-buffer-contents-since-last-read %s" buffer))

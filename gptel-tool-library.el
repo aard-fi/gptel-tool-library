@@ -46,6 +46,13 @@
   :group 'gptel-tool-library
   :type 'sexp)
 
+(defcustom gptel-tool-library-max-result-size 40
+  "The maximum length of a result in characters.
+
+Depending no the function exceeding that should either throw an error, or filter the result"
+  :group 'gptel-tool-library
+  :type 'integer)
+
 (defcustom gptel-tool-library-gptel-tools-var 'gptel-tools
   "Symbol of the variable holding the list of GPTel tools."
   :group 'gptel-tool-library
@@ -78,6 +85,11 @@
   (let ((buffer (get-buffer-create gptel-tool-library-debug-buffer)))
     (with-current-buffer gptel-tool-library-debug-buffer
       (insert (format "%s\n" log)))))
+
+(defun gptel-tool-library--limit-result (result)
+  (if (>= (length (format "%s" result)) gptel-tool-library-max-result-size)
+      (format "Results over %s character. Stop. Analyze. Find a different solution, or use a more specific query." gptel-tool-library-max-result-size)
+    result))
 
 (defun gptel-tool-library-make-tools (&rest args)
   "Create tools for any known LLMs"

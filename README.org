@@ -86,6 +86,8 @@ Tools should be implemented as one or more helper functions, which then later on
 
 A helper function serving as entry point for a tool should typically start by calling =gptel-tool-library--debug-log= with its name and arguments - that way a user can trace what the LLM is trying to do.
 
+Tools should respect a users set response length limit in =gptel-tool-library-max-result-size=. If the result can be filtered to reach the limit a function should implement filtering. Otherwise wrapping the function in =gptel-tool-library--limit-result= might be a good alternative - this will tell the LLM to try information gathering in a different way when exceeding the limit.
+
 **** Tool registration
 
 The tool should become member of one of the three lists defined earlier, depending on how safe it is. For example:
