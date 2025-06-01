@@ -113,17 +113,29 @@ For just supporting one specific backend the following is fine:
 For registering it for =llm= the tool function would be =llm-make-tool=. To register for all backends currently available =gptel-tool-library-make-tools= can be used. It takes the same arguments as the other tool functions, but returns a list of tools. So to register its results the code would look like this:
 
 #+BEGIN_SRC elisp
-(setq gptel-tool-library-buffer-tools (nconc 'gptel-tool-library-buffer-tools
-               (gptel-tool-library-make-tools
-                :function #'gptel-tool-library-buffer--read-buffer-contents
-                :name  "gptel-tool-library-buffer--read-buffer-contents"
-                :description "Read a buffers contents. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
-                :args (list '(:name "buffer"
-                                    :type string
-                                    :description "The buffer to retrieve contents from."))
-                :category "emacs-buffer")))
+  (setq gptel-tool-library-buffer-tools (nconc 'gptel-tool-library-buffer-tools
+                 (gptel-tool-library-make-tools
+                  :function #'gptel-tool-library-buffer--read-buffer-contents
+                  :name  "gptel-tool-library-buffer--read-buffer-contents"
+                  :description "Read a buffers contents. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
+                  :args (list '(:name "buffer"
+                                      :type string
+                                      :description "The buffer to retrieve contents from."))
+                  :category "emacs-buffer")))
 #+END_SRC
 
-The =setq= can be skipped if the variable is known to be non-nil.
+The =setq= can be skipped if the variable is known to be non-nil. There's also a function taking a list as first argument, adding the generated tools to that list:
+
+#+BEGIN_SRC elisp
+  (gptel-tool-library-make-tools-and-register
+   'gptel-tool-library-buffer-tools
+   :function #'gptel-tool-library-buffer--read-buffer-contents
+   :name  "gptel-tool-library-buffer--read-buffer-contents"
+   :description "Read a buffers contents. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
+   :args (list '(:name "buffer"
+                       :type string
+                       :description "The buffer to retrieve contents from."))
+   :category "emacs-buffer")
+#+END_SRC
 
 Tools must not prompt for confirmation - unless they're on the unsafe list, in which case they must prompt.

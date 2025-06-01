@@ -69,6 +69,10 @@
 (defconst gptel-tool-library-dir (file-name-directory (or load-file-name
                                                           buffer-file-name)))
 
+(defun gptel-tool-library-append-tools (var tools)
+  "Append TOOLS to the list stored in variable VAR non-destructively."
+  (set var (append (symbol-value var) tools)))
+
 (defun gptel-tool-library--debug-log (log)
   "Print LOG to `gptel-tool-library-debug-buffer' if debug logging is enabled."
   (let ((buffer (get-buffer-create gptel-tool-library-debug-buffer)))
@@ -82,6 +86,11 @@
       (add-to-list 'tool-list (apply #'gptel-make-tool args)))
     (when (fboundp 'llm-make-tool)
       (add-to-list 'tool-list (apply #'llm-make-tool args)))))
+
+(defun gptel-tool-library-make-tools-and-register (list &rest args)
+  "Create tools for any known LLMS and add them to LIST"
+  (gptel-tool-library-append-tools list
+   (apply #'gptel-tool-library-make-tools args)))
 
 (defun gptel-tool-library-tool--accessor (tool slot)
   "Return SLOT value from TOOL if TOOl is a known type and accessor exists, else nil.
@@ -144,42 +153,39 @@ Ignores tools for which required accessors are not available."
                       ('llm-tool "llm")
                       (_ (error "Unknown tool type encountered: %s" (type-of tool)))))
          (container-var-sym (intern (format "gptel-tool-library-%s-tools-var" tool-type))))
-    (if (and (boundp container-var-sym) container-var-sym)
+    (when (and (boundp container-var-sym)
+             (symbol-value container-var-sym))
         (let ((target-var-sym (symbol-value container-var-sym)))
           (unless (listp (symbol-value target-var-sym))
             (set target-var-sym '()))
-          (set target-var-sym (cons tool (symbol-value target-var-sym))))
-      (error "Problem registering tool"))))
+          (set target-var-sym (cons tool (symbol-value target-var-sym)))))))
 
 (defun gptel-tool-library-load-module (module-name)
   "Load library `gptel-tool-library-MODULE-NAME' and add its tools to `gptel-tools'.
 
 Note that this unloads all tools from a module before loading - so for a reload it is
 sufficient to just call this function, explicit unloading is not required."
-  (let* ((module-sym (intern (format "gptel-tool-library-%s" module-name)))
-         (module-category-sym (intern (format "gptel-tool-library-%s-category-name" module-name)))
-         (category (if (boundp module-category-sym)
-                       (symbol-value module-category-sym)
-                     module-name)))
+  (let* ((module-sym (intern (format "gptel-tool-library-%s" module-name))))
     (condition-case err
         (progn
+          (gptel-tool-library-unload-module module-name)
           (require module-sym)
-          ;; first nuke all existing tools, by category - we don't know
-          ;; if tool definitions have changed, so might no longer match
-          ;; llm tools don't have categories, so we'll still have to try
-          ;; to remove them by name individually later on
-          (gptel-tool-library--remove-tool-by-keys-everywhere :category category)
           (dolist (n '("" "-unsafe" "-maybe-safe"))
-            (let ((cond-var-sym (intern (format "gptel-tool-library-use%s" n)))
-                  (tool-var-sym (intern (format "gptel-tool-library-%s-tools%s" module-name n))))
+            (let* ((cond-var-sym (intern (format "gptel-tool-library-use%s" n)))
+                   (tool-var-sym (intern (format "gptel-tool-library-%s-tools%s" module-name n)))
+                   (module-category-sym (intern (format "gptel-tool-library-%s-category-name" module-name)))
+                   (category (if (boundp module-category-sym)
+                                 (symbol-value module-category-sym)
+                               module-name)))
               (when (and (boundp cond-var-sym) (symbol-value cond-var-sym))
                 (when (boundp tool-var-sym)
                   (dolist (tool (symbol-value tool-var-sym))
                     ;; refuse loading if categories are incorrectly defined
                     (when (eq (type-of tool) 'gptel-tool)
                       (let ((tool-category (gptel-tool-library-tool-category tool)))
-                        (message (format "Processing %s..."
-                                         (gptel-tool-library-tool-name tool)))
+                        (gptel-tool-library--debug-log
+                         (format "Processing tool load for %s..."
+                                 (gptel-tool-library-tool-name tool)))
                         (unless
                             (string=
                              (if (symbolp tool-category) (symbol-name tool-category) tool-category)
@@ -201,6 +207,15 @@ namespace."
          (category (if (boundp module-category-sym)
                        (symbol-value module-category-sym)
                      module-name)))
+    ;; TODO: for llm we should loop through existing variables here to remove tools
+    (let* ((feature-name (format "gptel-tool-library-%s" module-name))
+           (feature-sym (intern feature-name)))
+      (when (featurep feature-sym)
+        (unload-feature feature-sym t)))
+    ;; nuke all existing tools, by category - we don't know
+    ;; if tool definitions have changed, so might no longer match
+    ;; llm tools don't have categories, so we'll still have to try
+    ;; to remove them by name individually later on
     (gptel-tool-library--remove-tool-by-keys-everywhere :category category)))
 
 (provide 'gptel-tool-library)

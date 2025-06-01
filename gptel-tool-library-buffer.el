@@ -46,15 +46,15 @@ the LLM behaves.")
     (with-current-buffer buffer
       (concat (buffer-substring-no-properties (point-min) (point-max))))))
 
-(add-to-list 'gptel-tool-library-buffer-tools
-             (gptel-make-tool
-              :function #'gptel-tool-library-buffer--read-buffer-contents
-              :name  "read-buffer-contents"
-              :description "Read a buffers contents. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
-              :args (list '(:name "buffer"
-                                  :type string
-                                  :description "The buffer to retrieve contents from."))
-              :category "emacs-buffer"))
+(gptel-tool-library-make-tools-and-register
+ 'gptel-tool-library-buffer-tools
+ :function #'gptel-tool-library-buffer--read-buffer-contents
+ :name  "read-buffer-contents"
+ :description "Read a buffers contents. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
+ :args (list '(:name "buffer"
+                     :type string
+                     :description "The buffer to retrieve contents from."))
+ :category "emacs-buffer")
 
 (defun gptel-tool-library-buffer--read-buffer-region (buffer from to)
   "Return contents of BUFFER region from FROM to TO."
@@ -63,21 +63,21 @@ the LLM behaves.")
     (with-current-buffer buffer
       (concat (buffer-substring-no-properties from to)))))
 
-(add-to-list 'gptel-tool-library-buffer-tools
-             (gptel-make-tool
-              :function #'gptel-tool-library-buffer--read-buffer-region
-              :name  "read-buffer-region"
-              :description "Read a region of a buffer. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
-              :args (list '(:name "buffer"
-                                  :type string
-                                  :description "The buffer to retrieve contents from.")
-                          '(:name "from"
-                                  :type integer
-                                  :description "Start of the region to read.")
-                          '(:name "to"
-                                  :type integer
-                                  :description "End of the region to read."))
-              :category "emacs-buffer"))
+(gptel-tool-library-make-tools-and-register
+ 'gptel-tool-library-buffer-tools
+ :function #'gptel-tool-library-buffer--read-buffer-region
+ :name  "read-buffer-region"
+ :description "Read a region of a buffer. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
+ :args (list '(:name "buffer"
+                     :type string
+                     :description "The buffer to retrieve contents from.")
+             '(:name "from"
+                     :type integer
+                     :description "Start of the region to read.")
+             '(:name "to"
+                     :type integer
+                     :description "End of the region to read."))
+ :category "emacs-buffer")
 
 (defun gptel-tool-library-buffer--read-buffer-contents-since-last-read (buffer)
   "Return contents of BUFFER since last read, or all buffer on first read."
@@ -92,15 +92,15 @@ the LLM behaves.")
       (message (format "Last read %s->%s" last-pos gptel-tool-library-buffer--last-read-pos))
       (concat (buffer-substring-no-properties last-pos (point-max))))))
 
-(add-to-list 'gptel-tool-library-buffer-tools
-             (gptel-make-tool
-              :function #'gptel-tool-library-buffer--read-buffer-contents-since-last-read
-              :name  "read-buffer-contents-since-last-read"
-              :description "Read content added to a buffer since last reading it. On first read, return complete buffer contents If the buffer does not exist create it, and return an empty string. This assumes buffers which only get appended to - don't try to edit a buffer read with this tool. After calling this tool, stop. Then continue fulfilling user's request."
-              :args (list '(:name "buffer"
-                                  :type string
-                                  :description "The buffer to retrieve contents from."))
-              :category "emacs-buffer"))
+(gptel-tool-library-make-tools-and-register
+ 'gptel-tool-library-buffer-tools
+ :function #'gptel-tool-library-buffer--read-buffer-contents-since-last-read
+ :name  "read-buffer-contents-since-last-read"
+ :description "Read content added to a buffer since last reading it. On first read, return complete buffer contents If the buffer does not exist create it, and return an empty string. This assumes buffers which only get appended to - don't try to edit a buffer read with this tool. After calling this tool, stop. Then continue fulfilling user's request."
+ :args (list '(:name "buffer"
+                     :type string
+                     :description "The buffer to retrieve contents from."))
+ :category "emacs-buffer")
 
 (defun gptel-tool-library-buffer--set-buffer-pos (buffer pos)
   "Set the last read position for buffer."
@@ -125,13 +125,13 @@ the LLM behaves.")
     (let ((content (buffer-string)))
       content)))
 
-(add-to-list 'gptel-tool-library-buffer-tools
-             (gptel-make-tool
-              :function #'gptel-tool-library-buffer--list-buffers
-              :name  "list-buffers"
-              :category "emacs-buffer"
-              :description "List buffers open in Emacs, including file names and full paths. After using this, stop. Then evaluate which files are most likely to be relevant to the user's request."
-              :category "emacs-buffer"))
+(gptel-tool-library-make-tools-and-register
+ 'gptel-tool-library-buffer-tools
+ :function #'gptel-tool-library-buffer--list-buffers
+ :name  "list-buffers"
+ :category "emacs-buffer"
+ :description "List buffers open in Emacs, including file names and full paths. After using this, stop. Then evaluate which files are most likely to be relevant to the user's request."
+ :category "emacs-buffer")
 
 (defun gptel-tool-library-buffer--erase-buffer (buffer)
   "Erase contents of BUFFER."
@@ -140,15 +140,15 @@ the LLM behaves.")
     (with-current-buffer buffer
       (erase-buffer))))
 
-(add-to-list 'gptel-tool-library-buffer-tools-maybe-safe
-             (gptel-make-tool
-              :function #'gptel-tool-library-buffer--erase-buffer
-              :name  "erase-buffer"
-              :description "Erase buffers contents. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
-              :args (list '(:name "buffer"
-                                  :type string
-                                  :description "The buffer to erase contents in."))
-              :category "emacs-buffer"))
+(gptel-tool-library-make-tools-and-register
+ 'gptel-tool-library-buffer-tools-maybe-safe
+ :function #'gptel-tool-library-buffer--erase-buffer
+ :name  "erase-buffer"
+ :description "Erase buffers contents. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
+ :args (list '(:name "buffer"
+                     :type string
+                     :description "The buffer to erase contents in."))
+ :category "emacs-buffer")
 
 (defun gptel-tool-library-buffer--buffer-size (buffer)
   "Return the size of BUFFER."
@@ -157,15 +157,15 @@ the LLM behaves.")
     (with-current-buffer buffer
       (buffer-size))))
 
-(add-to-list 'gptel-tool-library-buffer-tools
-             (gptel-make-tool
-              :function #'gptel-tool-library-buffer--buffer-size
-              :name  "buffer-size"
-              :description "Read a buffers contents. If the buffer does not exist create it first. After calling this tool, stop. Then continue fulfilling user's request."
-              :args (list '(:name "buffer"
-                                  :type string
-                                  :description "The buffer to get the size from."))
-              :category "emacs-buffer"))
+(gptel-tool-library-make-tools-and-register
+ 'gptel-tool-library-buffer-tools
+ :function #'gptel-tool-library-buffer--buffer-size
+ :name  "buffer-size"
+ :description "Read a buffers contents. If the buffer does not exist create it first. After calling this tool, stop. Then continue fulfilling user's request."
+ :args (list '(:name "buffer"
+                     :type string
+                     :description "The buffer to get the size from."))
+ :category "emacs-buffer")
 
 (defun gptel-tool-library-buffer--replace-region (buffer from to text)
   "Replace text in BUFFER from FROM to TO with TEXT"
@@ -175,24 +175,24 @@ the LLM behaves.")
     (goto-char from)
     (insert text)))
 
-(add-to-list 'gptel-tool-library-buffer-tools-maybe-safe
-             (gptel-make-tool
-              :function #'gptel-tool-library-buffer--replace-region
-              :name  "replace-region"
-              :description "Replace a region in a buffer with new text. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
-              :args (list '(:name "buffer"
-                                  :type string
-                                  :description "The buffer to replace contents in.")
-                          '(:name "from"
-                                  :type integer
-                                  :description "The begin of the region.")
-                          '(:name "to"
-                                  :type integer
-                                  :description "The end of the region.")
-                          '(:name "text"
-                                  :type string
-                                  :description "The text to replace the region with."))
-              :category "emacs-buffer"))
+(gptel-tool-library-make-tools-and-register
+ 'gptel-tool-library-buffer-tools-maybe-safe
+ :function #'gptel-tool-library-buffer--replace-region
+ :name  "replace-region"
+ :description "Replace a region in a buffer with new text. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
+ :args (list '(:name "buffer"
+                     :type string
+                     :description "The buffer to replace contents in.")
+             '(:name "from"
+                     :type integer
+                     :description "The begin of the region.")
+             '(:name "to"
+                     :type integer
+                     :description "The end of the region.")
+             '(:name "text"
+                     :type string
+                     :description "The text to replace the region with."))
+ :category "emacs-buffer")
 
 (defun gptel-tool-library-buffer--remove-region (buffer from to)
   "Remove region from FROM to TO in buffer BUFFER"
@@ -200,21 +200,21 @@ the LLM behaves.")
   (with-current-buffer buffer
     (delete-region from to)))
 
-(add-to-list 'gptel-tool-library-buffer-tools-maybe-safe
-             (gptel-make-tool
-              :function #'gptel-tool-library-buffer--remove-region
-              :name  "remove-region"
-              :description "Remove a region in a buffer with new text. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
-              :args (list '(:name "buffer"
-                                  :type string
-                                  :description "The buffer to remove contents in.")
-                          '(:name "from"
-                                  :type integer
-                                  :description "The begin of the region.")
-                          '(:name "to"
-                                  :type integer
-                                  :description "The end of the region."))
-              :category "emacs-buffer"))
+(gptel-tool-library-make-tools-and-register
+ 'gptel-tool-library-buffer-tools-maybe-safe
+ :function #'gptel-tool-library-buffer--remove-region
+ :name  "remove-region"
+ :description "Remove a region in a buffer with new text. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
+ :args (list '(:name "buffer"
+                     :type string
+                     :description "The buffer to remove contents in.")
+             '(:name "from"
+                     :type integer
+                     :description "The begin of the region.")
+             '(:name "to"
+                     :type integer
+                     :description "The end of the region."))
+ :category "emacs-buffer")
 
 (defun gptel-tool-library-buffer--insert-at (buffer at text)
   "Move point in buffer BUFFER to AT, and then insert TEXT"
@@ -223,42 +223,42 @@ the LLM behaves.")
     (goto-char (+ 1 at))
     (insert text)))
 
-(add-to-list 'gptel-tool-library-buffer-tools
-             (gptel-make-tool
-              :function #'gptel-tool-library-buffer--insert-at
-              :name  "insert-at"
-              :description "At text in a buffer at a specific location. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
-              :args (list '(:name "buffer"
-                                  :type string
-                                  :description "The buffer to add contents to.")
-                          '(:name "at"
-                                  :type integer
-                                  :description "The point in the buffer where text should be inserted.")
-                          '(:name "text"
-                                  :type string
-                                  :description "The text to insert with."))
-              :category "emacs-buffer"))
+(gptel-tool-library-make-tools-and-register
+ 'gptel-tool-library-buffer-tools
+ :function #'gptel-tool-library-buffer--insert-at
+ :name  "insert-at"
+ :description "At text in a buffer at a specific location. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
+ :args (list '(:name "buffer"
+                     :type string
+                     :description "The buffer to add contents to.")
+             '(:name "at"
+                     :type integer
+                     :description "The point in the buffer where text should be inserted.")
+             '(:name "text"
+                     :type string
+                     :description "The text to insert with."))
+ :category "emacs-buffer")
 
 ;; the following tools directly make existing functions available
-(add-to-list 'gptel-tool-library-buffer-tools
-             (gptel-make-tool
-              :function #'get-buffer-create
-              :name  "get-buffer-create"
-              :description "Use get-buffer-create to create or get a buffer. After calling this tool, stop. Then continue fulfilling user's request."
-              :args (list '(:name "buffer"
-                                  :type string
-                                  :description "The buffer to create or retrieve."))
-              :category "emacs-buffer"))
+(gptel-tool-library-make-tools-and-register
+ 'gptel-tool-library-buffer-tools
+ :function #'get-buffer-create
+ :name  "get-buffer-create"
+ :description "Use get-buffer-create to create or get a buffer. After calling this tool, stop. Then continue fulfilling user's request."
+ :args (list '(:name "buffer"
+                     :type string
+                     :description "The buffer to create or retrieve."))
+ :category "emacs-buffer")
 
-(add-to-list 'gptel-tool-library-buffer-tools
-             (gptel-make-tool
-              :function #'switch-to-buffer
-              :name  "switch-to-buffer"
-              :description "Use switch-to-buffer to switch to a buffer. After calling this tool, stop. Then continue fulfilling user's request."
-              :args (list '(:name "buffer"
-                                  :type string
-                                  :description "The buffer to switch to."))
-              :category "emacs-buffer"))
+(gptel-tool-library-make-tools-and-register
+ 'gptel-tool-library-buffer-tools
+ :function #'switch-to-buffer
+ :name  "switch-to-buffer"
+ :description "Use switch-to-buffer to switch to a buffer. After calling this tool, stop. Then continue fulfilling user's request."
+ :args (list '(:name "buffer"
+                     :type string
+                     :description "The buffer to switch to."))
+ :category "emacs-buffer")
 
 (provide 'gptel-tool-library-buffer)
 ;;; gptel-tool-library-buffer.el ends here
