@@ -1,3 +1,5 @@
+EMACS=emacs
+
 ALL: test
 
 .PHONY: clean lisp tests
@@ -8,8 +10,8 @@ clean:
 %.elc: %.el
 	emacs -batch -Q -L . -f batch-byte-compile $<
 
-compile:
-	@$(MAKE) -C lisp compile
+byte-compile:
+	@$(EMACS) -Q -L . --batch -f batch-byte-compile *.el
 
 lisp:
 	@$(MAKE) -C lisp

@@ -1,4 +1,4 @@
-;;; gptel-tool-library.el --- A collection of tools for gptel
+;;; gptel-tool-library.el --- A collection of tools for gptel -*- lexical-binding: t; -*-
 ;;
 ;; Author: Bernd Wachter
 ;;
@@ -49,7 +49,8 @@
 (defcustom gptel-tool-library-max-result-size 40
   "The maximum length of a result in characters.
 
-Depending no the function exceeding that should either throw an error, or filter the result"
+Depending no the function exceeding that should either throw an error, or filter
+the result"
   :group 'gptel-tool-library
   :type 'integer)
 
@@ -69,7 +70,7 @@ Depending no the function exceeding that should either throw an error, or filter
   :type 'symbol)
 
 (defcustom gptel-tool-library-debug-buffer "*gptel-tool-debug*"
-  "Buffer for debug output, if debug logging is enabled via `gptel-tool-library-debug'"
+  "Buffer for debug output, if enabled via `gptel-tool-library-debug'"
   :group 'gptel-tool-library
   :type 'string)
 
@@ -82,7 +83,7 @@ Depending no the function exceeding that should either throw an error, or filter
 
 (defun gptel-tool-library--debug-log (log)
   "Print LOG to `gptel-tool-library-debug-buffer' if debug logging is enabled."
-  (let ((buffer (get-buffer-create gptel-tool-library-debug-buffer)))
+  (let ((_buffer (get-buffer-create gptel-tool-library-debug-buffer)))
     (with-current-buffer gptel-tool-library-debug-buffer
       (insert (format "%s\n" log)))))
 
@@ -95,9 +96,10 @@ Depending no the function exceeding that should either throw an error, or filter
   "Create tools for any known LLMs"
   (let ((tool-list '()))
     (when (fboundp 'gptel-make-tool)
-      (add-to-list 'tool-list (apply #'gptel-make-tool args)))
+      (cl-pushnew (apply #'gptel-make-tool args) tool-list))
     (when (fboundp 'llm-make-tool)
-      (add-to-list 'tool-list (apply #'llm-make-tool args)))))
+      (cl-pushnew (apply #'llm-make-tool args) tool-list))
+    tool-list))
 
 (defun gptel-tool-library-make-tools-and-register (list &rest args)
   "Create tools for any known LLMS and add them to LIST"
@@ -105,10 +107,10 @@ Depending no the function exceeding that should either throw an error, or filter
    (apply #'gptel-tool-library-make-tools args)))
 
 (defun gptel-tool-library-tool--accessor (tool slot)
-  "Return SLOT value from TOOL if TOOl is a known type and accessor exists, else nil.
+  "Return SLOT value from TOOL if it is a known type and accessor exists, else nil.
 
-This helps us in providing a generic wrapper for the tool interfaces of the various
-LLM libraries"
+This helps us in providing a generic wrapper for the tool interfaces of the
+various LLM libraries"
   (cond
    ((and (cl-typep tool 'gptel-tool)
          (fboundp (intern (format "gptel-tool-%s" slot))))
@@ -173,10 +175,10 @@ Ignores tools for which required accessors are not available."
           (set target-var-sym (cons tool (symbol-value target-var-sym)))))))
 
 (defun gptel-tool-library-load-module (module-name)
-  "Load library `gptel-tool-library-MODULE-NAME' and add its tools to `gptel-tools'.
+  "Load `gptel-tool-library-MODULE-NAME' and add its tools to `gptel-tools'.
 
-Note that this unloads all tools from a module before loading - so for a reload it is
-sufficient to just call this function, explicit unloading is not required."
+Note that this unloads all tools from a module before loading - so for a reload
+it is sufficient to just call this function, explicit unloading is not required."
   (let* ((module-sym (intern (format "gptel-tool-library-%s" module-name))))
     (condition-case err
         (progn
@@ -212,9 +214,9 @@ sufficient to just call this function, explicit unloading is not required."
 (defun gptel-tool-library-unload-module (module-name)
   "Remove tools from `gptel-tools' that belong to module MODULE-NAME.
 
-This expects that all tools from the module have the same category, and the category
-either matches the module name, or a `category-name' variable is set in the module
-namespace."
+This expects that all tools from the module have the same category, and the
+category either matches the module name, or a `category-name' variable is set in
+the module namespace."
   (let* ((module-category-sym (intern (format "gptel-tool-library-%s-category-name" module-name)))
          (category (if (boundp module-category-sym)
                        (symbol-value module-category-sym)

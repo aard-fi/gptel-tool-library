@@ -1,4 +1,4 @@
-;;; gptel-tool-library-os.el --- OS interaction tools
+;;; gptel-tool-library-os.el --- OS interaction tools -*- lexical-binding: t; -*-
 ;;
 ;; Author: Bernd Wachter
 ;;
@@ -45,17 +45,16 @@ the LLM behaves.")
     (concat
      (buffer-string))))
 
-(add-to-list 'gptel-tool-library-os-tools-unsafe
-             (add-to-list 'gptel-tools
-                          (gptel-make-tool
-                           :function #'gptel-tool-library-os--run-shell
-                           :name  "run-shell"
-                           :description "Executs a bash shell command and returns its output. After calling this tool, stop. Then continue fulfilling user's request."
-                           :args (list '(:name "command"
-                                               :type string
-                                               :description "The shell command to execute."))
-                           :category "OS"
-                           :confirm t)))
+(gptel-tool-library-make-tools-and-register
+ 'gptel-tool-library-os-tools-unsafe
+ :function #'gptel-tool-library-os--run-shell
+ :name  "run-shell"
+ :description "Executs a bash shell command and returns its output. After calling this tool, stop. Then continue fulfilling user's request."
+ :args (list '(:name "command"
+                     :type string
+                     :description "The shell command to execute."))
+ :category "OS"
+ :confirm t)
 
 (defun gptel-tool-library-os--read-file-contents (filename)
   "Return contents of FILE."
@@ -65,15 +64,15 @@ the LLM behaves.")
     (concat
      (buffer-string))))
 
-(add-to-list 'gptel-tool-library-os-tools-maybe-safe
-             (gptel-make-tool
-              :function #'gptel-tool-library-os--read-file-contents
-              :name  "read-file-contents"
-              :description "Reads and return the contents of a specified file. After calling this tool, stop. Then continue fulfilling user's request."
-              :args (list '(:name "filename"
-                                  :type string
-                                  :description "The filename to read."))
-              :category "OS"))
+(gptel-tool-library-make-tools-and-register
+ 'gptel-tool-library-os-tools-maybe-safe
+ :function #'gptel-tool-library-os--read-file-contents
+ :name  "read-file-contents"
+ :description "Reads and return the contents of a specified file. After calling this tool, stop. Then continue fulfilling user's request."
+ :args (list '(:name "filename"
+                     :type string
+                     :description "The filename to read."))
+ :category "OS")
 
 (provide 'gptel-tool-library-os)
 ;;; gptel-tool-library-os.el ends here

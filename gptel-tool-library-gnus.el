@@ -1,4 +1,4 @@
-;;; gptel-tool-library-gnus.el --- LLM integration with GNUS
+;;; gptel-tool-library-gnus.el --- LLM integration with GNUS -*- lexical-binding: t; -*-
 ;;
 ;; Author: Bernd Wachter
 ;;
@@ -40,21 +40,21 @@ the LLM behaves.")
   (gnus-setup-message 'message (message-mail to-address subject))
   (insert (concat "\n" text)))
 
-(add-to-list 'gptel-tool-library-gnus-tools-maybe-safe
-             (gptel-make-tool
-              :function #'gptel-tool-library-gnus--compose-email
-              :name  "compose-email"
-              :description "Open an email compose buffer and set subject, to-address and body. After calling this tool, stop. Then continue fulfilling user's request."
-              :args (list '(:name "to-address"
-                                  :type string
-                                  :description "The address to send to")
-                          '(:name "subject"
-                                  :type string
-                                  :description "The mail subject")
-                          '(:name "body"
-                                  :type string
-                                  :description "The body text of the email"))
-              :category "gnus"))
+(gptel-tool-library-make-tools-and-register
+ 'gptel-tool-library-gnus-tools-maybe-safe
+ :function #'gptel-tool-library-gnus--compose-email
+ :name  "compose-email"
+ :description "Open an email compose buffer and set subject, to-address and body. After calling this tool, stop. Then continue fulfilling user's request."
+ :args (list '(:name "to-address"
+                     :type string
+                     :description "The address to send to")
+             '(:name "subject"
+                     :type string
+                     :description "The mail subject")
+             '(:name "body"
+                     :type string
+                     :description "The body text of the email"))
+ :category "gnus")
 
 (provide 'gptel-tool-library-gnus)
 ;;; gptel-tool-library-gnus.el ends here

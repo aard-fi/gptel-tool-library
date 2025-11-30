@@ -1,4 +1,4 @@
-;;; gptel-tool-library-url.el --- URL based LLM bindings
+;;; gptel-tool-library-url.el --- URL based LLM bindings -*- lexical-binding: t; -*-
 ;;
 ;; Author: Bernd Wachter
 ;;
@@ -44,16 +44,16 @@ the LLM behaves.")
         (message (format "LLM pulls URL %s" url))
         (concat (buffer-string))))))
 
-(add-to-list 'gptel-tool-library-url-tools-unsafe
-             (gptel-make-tool
-              :function #'gptel-tool-library-url--get-url
-              :name  "get-url"
-              :description "rectrieve an url. after calling this tool, stop. then continue fulfilling user's request."
-              :args (list '(:name "url"
-                                  :type string
-                                  :description "the url to retrieve."))
-              :category "url"
-              :confirm t))
+(gptel-tool-library-make-tools-and-register
+ 'gptel-tool-library-url-tools-unsafe
+ :function #'gptel-tool-library-url--get-url
+ :name  "get-url"
+ :description "rectrieve an url. after calling this tool, stop. then continue fulfilling user's request."
+ :args (list '(:name "url"
+                     :type string
+                     :description "the url to retrieve."))
+ :category "url"
+ :confirm t)
 
 (defun gptel-tool-library-url--get-website (url)
   "return the content of the url as rendered page."
@@ -66,15 +66,15 @@ the LLM behaves.")
           (concat (buffer-substring-no-properties (point-min) (point-max))))
       "unable to load website")))
 
-(add-to-list 'gptel-tool-library-url-tools-unsafe
-             (gptel-make-tool
-              :function #'gptel-tool-library-url--get-website
-              :name  "get-website"
-              :description "rectrieve a website and render it. after calling this tool, stop. then continue fulfilling user's request."
-              :args (list '(:name "url"
-                                  :type string
-                                  :description "the url to retrieve."))
-              :category "url"))
+(gptel-tool-library-make-tools-and-register
+ 'gptel-tool-library-url-tools-unsafe
+ :function #'gptel-tool-library-url--get-website
+ :name  "get-website"
+ :description "rectrieve a website and render it. after calling this tool, stop. then continue fulfilling user's request."
+ :args (list '(:name "url"
+                     :type string
+                     :description "the url to retrieve."))
+ :category "url")
 
 (provide 'gptel-tool-library-url)
 ;;; gptel-tool-library-url.el ends here

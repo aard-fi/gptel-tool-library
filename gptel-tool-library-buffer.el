@@ -1,4 +1,4 @@
-;;; gptel-tool-library-buffer.el --- Tool functions for buffer access
+;;; gptel-tool-library-buffer.el --- Tool functions for buffer access -*- lexical-binding: t; -*-
 ;;
 ;; Author: Bernd Wachter
 ;;
@@ -38,6 +38,9 @@ the LLM behaves.")
 
 (defvar gptel-tool-library-buffer-category-name "emacs-buffer"
   "The buffer category used for tool registration")
+
+(defvar-local gptel-tool-library-buffer--last-read-pos nil
+  "Buffer local variable to track LLM read position.")
 
 (defun gptel-tool-library-buffer--read-buffer-contents (buffer)
   "Return contents of BUFFER."
@@ -90,7 +93,7 @@ the LLM behaves.")
     (unless (local-variable-p 'gptel-tool-library-buffer--last-read-pos)
       (make-local-variable 'gptel-tool-library-buffer--last-read-pos)
       (setq gptel-tool-library-buffer--last-read-pos (point-min)))
-    (let ((buffer (get-buffer-create buffer))
+    (let ((_buffer (get-buffer-create buffer))
           (last-pos gptel-tool-library-buffer--last-read-pos))
       (setq gptel-tool-library-buffer--last-read-pos (point-max))
       (message (format "Last read %s->%s" last-pos gptel-tool-library-buffer--last-read-pos))

@@ -1,4 +1,4 @@
-;;; gptel-tool-library-emacs.el --- Simple and safe emacs information gathering tools
+;;; gptel-tool-library-emacs.el --- Simple and safe emacs information gathering tools -*- lexical-binding: t; -*-
 ;;
 ;; Author: Bernd Wachter
 ;;
@@ -40,15 +40,15 @@
         (prin1-to-string (symbol-value symbol))
       (format "Variable %s is not bound. This means the variable doesn't exist. Stop. Reassess what you're trying to do, examine the situation, and continue. " var))))
 
-(add-to-list 'gptel-tool-library-emacs-tools
-             (gptel-make-tool
-              :function #'gptel-tool-library-emacs--describe-variable
-              :name  "describe-variable"
-              :description "Returns variable contents. After calling this tool, stop. Evaluate if the result helps. Then continue fulfilling user's request."
-              :args (list '(:name "var"
-                                  :type string
-                                  :description "Variable name"))
-              :category "emacs"))
+(gptel-tool-library-make-tools-and-register
+ 'gptel-tool-library-emacs-tools
+ :function #'gptel-tool-library-emacs--describe-variable
+ :name  "describe-variable"
+ :description "Returns variable contents. After calling this tool, stop. Evaluate if the result helps. Then continue fulfilling user's request."
+ :args (list '(:name "var"
+                     :type string
+                     :description "Variable name"))
+ :category "emacs")
 
 (defun gptel-tool-library-emacs--describe-function (fun)
   "Return documentation for FUN."
@@ -58,38 +58,38 @@
         (prin1-to-string (documentation symbol 'function))
       (format "Function %s is not defined." fun))))
 
-(add-to-list 'gptel-tool-library-emacs-tools
-             (gptel-make-tool
-              :function #'gptel-tool-library-emacs--describe-function
-              :name  "describe-function"
-              :description "Returns function description. After calling this tool, stop. Evaluate if the result helps. Then continue fulfilling user's request."
-              :args (list '(:name "fun"
-                                  :type string
-                                  :description "Function name"
-                                  :optional t))
-              :category "emacs"))
+(gptel-tool-library-make-tools-and-register
+ 'gptel-tool-library-emacs-tools
+ :function #'gptel-tool-library-emacs--describe-function
+ :name  "describe-function"
+ :description "Returns function description. After calling this tool, stop. Evaluate if the result helps. Then continue fulfilling user's request."
+ :args (list '(:name "fun"
+                     :type string
+                     :description "Function name"
+                     :optional t))
+ :category "emacs")
 
 (defun gptel-tool-library-emacs--get-date ()
   "Return the current date"
   (format-time-string "%Y-%m-%d"))
 
-(add-to-list 'gptel-tool-library-emacs-tools
-             (gptel-make-tool
-              :function #'gptel-tool-library-emacs--get-date
-              :name  "get-date"
-              :description "Use to get the current date in %Y-%m-%d format. After calling this tool, stop. Then continue fulfilling user's request."
-              :category "emacs"))
+(gptel-tool-library-make-tools-and-register
+ 'gptel-tool-library-emacs-tools
+ :function #'gptel-tool-library-emacs--get-date
+ :name  "get-date"
+ :description "Use to get the current date in %Y-%m-%d format. After calling this tool, stop. Then continue fulfilling user's request."
+ :category "emacs")
 
 (defun gptel-tool-library-emacs--get-time ()
   "Return the current time"
   (format-time-string "%H:%M"))
 
-(add-to-list 'gptel-tool-library-emacs-tools
-             (gptel-make-tool
-              :function #'gptel-tool-library-emacs--get-time
-              :name  "get-time"
-              :description "Use to get the current time in %H:%M format. After calling this tool, stop. Then continue fulfilling user's request."
-              :category "emacs"))
+(gptel-tool-library-make-tools-and-register
+ 'gptel-tool-library-emacs-tools
+ :function #'gptel-tool-library-emacs--get-time
+ :name  "get-time"
+ :description "Use to get the current time in %H:%M format. After calling this tool, stop. Then continue fulfilling user's request."
+ :category "emacs")
 
 (provide 'gptel-tool-library-emacs)
 ;;; gptel-tool-library-emacs.el ends here

@@ -1,4 +1,4 @@
-;;; gptel-tool-library-search-and-replace.el ---
+;;; gptel-tool-library-search-and-replace.el --- -*- lexical-binding: t; -*-
 ;;
 ;; Author: Bernd Wachter
 ;;
@@ -68,7 +68,7 @@ Optional region from START to END bounds the search (defaults to whole buffer)."
     (let ((case-fold-search nil)
           (pos (or start (point-min)))
           (end (or end (point-max)))
-          (search-len (length search))
+          (_search-len (length search))
           (search-lines (split-string search "\n"))
           (replacement-lines (split-string replacement "\n")))
       (goto-char pos)

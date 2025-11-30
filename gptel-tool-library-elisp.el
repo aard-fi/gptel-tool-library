@@ -1,4 +1,4 @@
-;;; gptel-tool-library-elisp.el --- Functions to help with elisp development
+;;; gptel-tool-library-elisp.el --- Functions to help with elisp development -*- lexical-binding: t; -*-
 ;;
 ;; Author: Bernd Wachter
 ;;
@@ -58,8 +58,10 @@ the LLM behaves.")
  :confirm t)
 
 (defun gptel-tool-library-elisp--defun-region (function-name &optional buffer)
-  "Return a cons cell (START . END) with points just before and after FUNCTION-NAME defun in BUFFER.
-If BUFFER is nil, use the current buffer."
+  "Return (START . END) points around FUNCTION-NAME defun in BUFFER.
+
+If BUFFER is nil, use the current buffer. Points are just before and after
+the defun."
   (with-current-buffer (or buffer (current-buffer))
     (save-excursion
       (goto-char (point-min))
@@ -87,7 +89,9 @@ If BUFFER is nil, use the current buffer."
  :category "elisp")
 
 (defun gptel-tool-library-elisp--replace-defun-region (function-name new-string &optional buffer)
-  "Replace the entire region of FUNCTION-NAME with NEW-STRING in BUFFER or current buffer if omitted."
+  "Replace the entire FUNCTION-NAME region with NEW-STRING.
+
+Use BUFFER or current buffer if BUFFER is nil."
   (let ((bounds (gptel-tool-library-elisp--defun-region function-name buffer)))
     (if bounds
         (with-current-buffer (or buffer (current-buffer))
@@ -98,7 +102,9 @@ If BUFFER is nil, use the current buffer."
       (message "Function `%s` not found for replacement" function-name))))
 
 (defun gptel-tool-library-elisp--smerge-replace-defun-region (function-name new-string &optional buffer)
-  "Insert smerge-style conflict markers for FUNCTION-NAME region with NEW-STRING in BUFFER or current buffer."
+  "Insert smerge conflict markers for FUNCTION-NAME region with NEW-STRING.
+
+Operate in BUFFER or current buffer if BUFFER is nil."
   (interactive "sFunction name: \nsNew function text: \nBBuffer (optional): ")
   (let ((buf (or buffer (current-buffer)))
         bounds old-text conflict-text)
@@ -203,8 +209,10 @@ If source isn't found, falls back to the Emacs Lisp object sexp."
                      :type "string"
                      :description "The name of the symbol to receive sources for.")))
 
-(defun gptel-tool-library-elisp-describe-symbol-fuzzy (name &optional limit)
-  "List all functions and variables that fuzzily match the given name, along with a one-sentence summary, with an optional limit on the number of results."
+(defun gptel-tool-library-elisp-describe-symbol-fuzzy (_name &optional _limit)
+  "List functions and variables fuzzily matching NAME, with a summary.
+
+Optionally limit the number of results returned."
   (lambda (name &optional limit)
     (gptel-tool-library--debug-log (format "elisp_fuzzy_match: %s, limit: %s" name limit))
     (let ((matches '()))
