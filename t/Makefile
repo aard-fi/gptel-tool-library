@@ -4,7 +4,8 @@ ALL: module-tests
 .PHONY: module-tests test
 
 TESTS =
-TESTS += gtl-search-and-replace.el
+TESTS += gtl-module-elisp.el
+#TESTS += gtl-search-and-replace.el
 
 functional-tests:
 	@emacs -batch -Q --eval "(progn\

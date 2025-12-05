@@ -99,6 +99,14 @@ the result"
       (cl-pushnew (apply #'gptel-make-tool args) tool-list))
     (when (fboundp 'llm-make-tool)
       (cl-pushnew (apply #'llm-make-tool args) tool-list))
+    (when (fboundp 'claude-code-ide-make-tool)
+      ;; TODO, this needs some work
+      (condition-case err
+          (let ((tool (apply #'claude-code-ide-make-tool args)))
+            (message "claude-code-ide-make-tool returned: %S" tool)
+            (when (memq (type-of tool) '(gptel-tool llm-tool))
+              (cl-pushnew tool tool-list)))
+        (error (message "Skipping broken claude tool: %s" err))))
     tool-list))
 
 (defun gptel-tool-library-make-tools-and-register (list &rest args)
