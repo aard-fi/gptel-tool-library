@@ -96,8 +96,10 @@ BUFFER-NAME is a string or buffer object. If nil, use the current buffer."
  :category "OS")
 
 (defun gptel-tool-library-os--set-default-directory (directory &optional buffer-name)
-  "Set `default-directory' to DIRECTORY for BUFFER-NAME, or the current buffer if nil.
-DIRECTORY is a string. BUFFER-NAME is a string or buffer object. If nil, use the current buffer."
+  "Set `default-directory' to DIRECTORY for BUFFER-NAME, or the current buffer.
+
+DIRECTORY is a string. BUFFER-NAME is a string or buffer object. If nil, use the
+current buffer."
   (let ((buffer (if buffer-name
                     (get-buffer buffer-name)
                   (current-buffer))))
