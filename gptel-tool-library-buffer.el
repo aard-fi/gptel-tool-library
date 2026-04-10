@@ -42,6 +42,24 @@ the LLM behaves.")
 (defvar-local gptel-tool-library-buffer--last-read-pos nil
   "Buffer local variable to track LLM read position.")
 
+(defun gptel-tool-library-buffer--filename (&optional buffer)
+  "Returrn the full path of the file visited by `buffer' or current buffer"
+  (buffer-file-name
+   (get-buffer (if buffer
+                   (format "%s" buffer)
+                 (current-buffer)))))
+
+(gptel-tool-library-make-tools-and-register
+ 'gptel-tool-library-buffer-tools
+ :function #'gptel-tool-library-buffer--filename
+ :name  "buffer-filename"
+ :description "Return the filename of a buffer, or nil if no filename is associated."
+ :args (list '(:name "buffer"
+                     :type string
+                     :optional t
+                     :description "The buffer to get the filename from. Uses the active buffer when omitted."))
+ :category "emacs-buffer")
+
 (defun gptel-tool-library-buffer--read-buffer-contents (buffer)
   "Return contents of BUFFER."
   (gptel-tool-library--debug-log (format "read-buffer-contents %s" buffer))
@@ -143,8 +161,8 @@ the LLM behaves.")
 (defun gptel-tool-library-buffer--get-in-direction (direction)
   "Return the name of the buffer in the window in DIRECTION from current window.
 
-DIRECTION should be one of 'left, 'right, 'above, 'below, 'left-above,
-'left-below, 'right-above, or 'right-below (as symbols or strings).
+DIRECTION should be one of \='left, \='right, \='above, \='below, \='left-above,
+\='left-below, \='right-above, or \='right-below (as symbols or strings).
 
 If there is no window in that direction, return nil."
   (gptel-tool-library--debug-log (format "buffer-in-direction %s" direction))
