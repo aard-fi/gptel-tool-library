@@ -74,5 +74,50 @@ the LLM behaves.")
                      :description "The filename to read."))
  :category "OS")
 
+(defun gptel-tool-library-os--get-default-directory (&optional buffer-name)
+  "Return the `default-directory' of BUFFER-NAME, or the current buffer if nil.
+BUFFER-NAME is a string or buffer object. If nil, use the current buffer."
+  (let ((buffer (if buffer-name
+                    (get-buffer buffer-name)
+                  (current-buffer))))
+    (with-current-buffer buffer
+      default-directory)))
+
+(gptel-tool-library-make-tools-and-register
+ 'gptel-tool-library-os-tools
+ :function #'gptel-tool-library-os--get-default-directory
+ :name  "get-current-directory"
+ :description "Return the default-directory of BUFFER-NAME, or the current buffer if nil."
+ :args (list
+        '(:name "buffer-name"
+                :type string
+                :optional t
+                :description "Optional name of buffer to query; when omitted, use current buffer."))
+ :category "OS")
+
+(defun gptel-tool-library-os--set-default-directory (directory &optional buffer-name)
+  "Set `default-directory' to DIRECTORY for BUFFER-NAME, or the current buffer if nil.
+DIRECTORY is a string. BUFFER-NAME is a string or buffer object. If nil, use the current buffer."
+  (let ((buffer (if buffer-name
+                    (get-buffer buffer-name)
+                  (current-buffer))))
+    (with-current-buffer buffer
+      (setq default-directory (expand-file-name directory)))))
+
+(gptel-tool-library-make-tools-and-register
+ 'gptel-tool-library-os-tools-maybe-safe
+ :function #'gptel-tool-library-os--set-default-directory
+ :name  "set-current-directory"
+ :description "Set default-directory to DIRECTORY for BUFFER-NAME, or the current buffer.."
+ :args (list
+        '(:name "directory"
+                :type string
+                :description "The new default directory to set.")
+        '(:name "buffer-name"
+                :type string
+                :optional t
+                :description "Optional name of buffer to modify; when omitted, use the current buffer."))
+ :category "OS")
+
 (provide 'gptel-tool-library-os)
 ;;; gptel-tool-library-os.el ends here
