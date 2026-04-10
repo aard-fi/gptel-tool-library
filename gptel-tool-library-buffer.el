@@ -140,6 +140,34 @@ the LLM behaves.")
  :description "List buffers open in Emacs, including file names and full paths. After using this, stop. Then evaluate which files are most likely to be relevant to the user's request."
  :category "emacs-buffer")
 
+(defun gptel-tool-library-buffer--get-in-direction (direction)
+  "Return the name of the buffer in the window in DIRECTION from current window.
+
+DIRECTION should be one of 'left, 'right, 'above, 'below, 'left-above,
+'left-below, 'right-above, or 'right-below (as symbols or strings).
+
+If there is no window in that direction, return nil."
+  (gptel-tool-library--debug-log (format "buffer-in-direction %s" direction))
+  (let* ((dir-sym (if (symbolp direction)
+                      direction
+                    (intern direction)))
+         (win (window-in-direction dir-sym)))
+    (when win
+      (buffer-name (window-buffer win)))))
+
+(gptel-tool-library-make-tools-and-register
+ 'gptel-tool-library-buffer-tools
+ :function #'gptel-tool-library-buffer--get-in-direction
+ :name "get-in-direction"
+ :category "emacs-buffer"
+ :description
+ "Given a direction (e.g. left, right, above), return the name of the buffer displayed in that window relative to the currently selected window.
+ Returns nil if no such window exists."
+ :args (list '(:name "direction"
+                     :type string
+                     :description "The direction to search, one of left, right, above, below, right-above, right-below, left-above, left-below ."))
+ :category "emacs-buffer")
+
 (defun gptel-tool-library-buffer--erase-buffer (buffer)
   "Erase contents of BUFFER."
   (gptel-tool-library--debug-log (format "erase-buffer %s" buffer))
