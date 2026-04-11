@@ -1,4 +1,4 @@
-;;; gptel-tool-library-date-time.el --- Tools for access and manipulation of time and date -*- lexical-binding: t; -*-
+;;; eai-tool-library-date-time.el --- Tools for access and manipulation of time and date -*- lexical-binding: t; -*-
 ;;
 ;; Author: Bernd Wachter
 ;;
@@ -24,35 +24,35 @@
 ;;
 ;;; Code:
 
-(require 'gptel-tool-library)
+(require 'eai-tool-library)
 
-(defvar gptel-tool-library-date-time-tools '()
+(defvar eai-tool-library-date-time-tools '()
   "The list of emacs related tools")
 ;; we skip the other two variables as this module should only contain safe tools
 
-(defun gptel-tool-library-date-time--get-date ()
+(defun eai-tool-library-date-time--get-date ()
   "Return the current date"
   (format-time-string "%Y-%m-%d"))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-date-time-tools
- :function #'gptel-tool-library-date-time--get-date
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-date-time-tools
+ :function #'eai-tool-library-date-time--get-date
  :name  "get-date"
  :description "Use to get the current date in %Y-%m-%d format. After calling this tool, stop. Then continue fulfilling user's request."
  :category "date-time")
 
-(defun gptel-tool-library-date-time--get-time ()
+(defun eai-tool-library-date-time--get-time ()
   "Return the current time"
   (format-time-string "%H:%M"))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-date-time-tools
- :function #'gptel-tool-library-date-time--get-time
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-date-time-tools
+ :function #'eai-tool-library-date-time--get-time
  :name  "get-time"
  :description "Use to get the current time in %H:%M format. After calling this tool, stop. Then continue fulfilling user's request."
  :category "date-time")
 
 
-(provide 'gptel-tool-library-date-time)
+(provide 'eai-tool-library-date-time)
 
-;;; gptel-tool-library-date-time.el ends here
+;;; eai-tool-library-date-time.el ends here

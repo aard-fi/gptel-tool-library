@@ -1,4 +1,4 @@
-;;; gptel-tool-library-buffer.el --- Tool functions for buffer access -*- lexical-binding: t; -*-
+;;; eai-tool-library-buffer.el --- Tool functions for buffer access -*- lexical-binding: t; -*-
 ;;
 ;; Author: Bernd Wachter
 ;;
@@ -24,34 +24,34 @@
 ;;
 ;;; Code:
 
-(require 'gptel-tool-library)
+(require 'eai-tool-library)
 
-(defvar gptel-tool-library-buffer-tools '()
+(defvar eai-tool-library-buffer-tools '()
   "The list of buffer related tools")
 
-(defvar gptel-tool-library-buffer-tools-maybe-safe '()
+(defvar eai-tool-library-buffer-tools-maybe-safe '()
   "The list of buffer related tools which may be destructive, but typically
 the LLM behaves.")
 
-(defvar gptel-tool-library-buffer-tools-unsafe '()
+(defvar eai-tool-library-buffer-tools-unsafe '()
   "The list of buffer related tools which are not safe.")
 
-(defvar gptel-tool-library-buffer-category-name "emacs-buffer"
+(defvar eai-tool-library-buffer-category-name "emacs-buffer"
   "The buffer category used for tool registration")
 
-(defvar-local gptel-tool-library-buffer--last-read-pos nil
+(defvar-local eai-tool-library-buffer--last-read-pos nil
   "Buffer local variable to track LLM read position.")
 
-(defun gptel-tool-library-buffer--filename (&optional buffer)
+(defun eai-tool-library-buffer--filename (&optional buffer)
   "Returrn the full path of the file visited by `buffer' or current buffer"
   (buffer-file-name
    (get-buffer (if buffer
                    (format "%s" buffer)
                  (current-buffer)))))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-buffer-tools
- :function #'gptel-tool-library-buffer--filename
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-buffer-tools
+ :function #'eai-tool-library-buffer--filename
  :name  "buffer-filename"
  :description "Return the filename of a buffer, or nil if no filename is associated."
  :args (list '(:name "buffer"
@@ -60,17 +60,17 @@ the LLM behaves.")
                      :description "The buffer to get the filename from. Uses the active buffer when omitted."))
  :category "emacs-buffer")
 
-(defun gptel-tool-library-buffer--read-buffer-contents (buffer)
+(defun eai-tool-library-buffer--read-buffer-contents (buffer)
   "Return contents of BUFFER."
-  (gptel-tool-library--debug-log (format "read-buffer-contents %s" buffer))
-  (gptel-tool-library--limit-result
+  (eai-tool-library--debug-log (format "read-buffer-contents %s" buffer))
+  (eai-tool-library--limit-result
    (let ((buffer (get-buffer-create buffer)))
      (with-current-buffer buffer
        (concat (buffer-substring-no-properties (point-min) (point-max)))))))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-buffer-tools
- :function #'gptel-tool-library-buffer--read-buffer-contents
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-buffer-tools
+ :function #'eai-tool-library-buffer--read-buffer-contents
  :name  "read-buffer-contents"
  :description "Read a buffers contents. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
  :args (list '(:name "buffer"
@@ -78,17 +78,17 @@ the LLM behaves.")
                      :description "The buffer to retrieve contents from."))
  :category "emacs-buffer")
 
-(defun gptel-tool-library-buffer--read-buffer-region (buffer from to)
+(defun eai-tool-library-buffer--read-buffer-region (buffer from to)
   "Return contents of BUFFER region from FROM to TO."
-  (gptel-tool-library--debug-log (format "read-buffer-region %s %s->%s" buffer from to))
-  (gptel-tool-library--limit-result
+  (eai-tool-library--debug-log (format "read-buffer-region %s %s->%s" buffer from to))
+  (eai-tool-library--limit-result
    (let ((buffer (get-buffer-create buffer)))
      (with-current-buffer buffer
        (concat (buffer-substring-no-properties from to))))))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-buffer-tools
- :function #'gptel-tool-library-buffer--read-buffer-region
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-buffer-tools
+ :function #'eai-tool-library-buffer--read-buffer-region
  :name  "read-buffer-region"
  :description "Read a region of a buffer. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
  :args (list '(:name "buffer"
@@ -104,22 +104,22 @@ the LLM behaves.")
 
 ;; TODO - we should also limit result here, but instead of throwing an error it'd
 ;;        probably bet better to do only partial reads if we'd exceed the result limit
-(defun gptel-tool-library-buffer--read-buffer-contents-since-last-read (buffer)
+(defun eai-tool-library-buffer--read-buffer-contents-since-last-read (buffer)
   "Return contents of BUFFER since last read, or all buffer on first read."
-  (gptel-tool-library--debug-log (format "read-buffer-contents-since-last-read %s" buffer))
+  (eai-tool-library--debug-log (format "read-buffer-contents-since-last-read %s" buffer))
   (with-current-buffer buffer
-    (unless (local-variable-p 'gptel-tool-library-buffer--last-read-pos)
-      (make-local-variable 'gptel-tool-library-buffer--last-read-pos)
-      (setq gptel-tool-library-buffer--last-read-pos (point-min)))
+    (unless (local-variable-p 'eai-tool-library-buffer--last-read-pos)
+      (make-local-variable 'eai-tool-library-buffer--last-read-pos)
+      (setq eai-tool-library-buffer--last-read-pos (point-min)))
     (let ((_buffer (get-buffer-create buffer))
-          (last-pos gptel-tool-library-buffer--last-read-pos))
-      (setq gptel-tool-library-buffer--last-read-pos (point-max))
-      (message (format "Last read %s->%s" last-pos gptel-tool-library-buffer--last-read-pos))
+          (last-pos eai-tool-library-buffer--last-read-pos))
+      (setq eai-tool-library-buffer--last-read-pos (point-max))
+      (message (format "Last read %s->%s" last-pos eai-tool-library-buffer--last-read-pos))
       (concat (buffer-substring-no-properties last-pos (point-max))))))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-buffer-tools
- :function #'gptel-tool-library-buffer--read-buffer-contents-since-last-read
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-buffer-tools
+ :function #'eai-tool-library-buffer--read-buffer-contents-since-last-read
  :name  "read-buffer-contents-since-last-read"
  :description "Read content added to a buffer since last reading it. On first read, return complete buffer contents If the buffer does not exist create it, and return an empty string. This assumes buffers which only get appended to - don't try to edit a buffer read with this tool. After calling this tool, stop. Then continue fulfilling user's request."
  :args (list '(:name "buffer"
@@ -127,45 +127,45 @@ the LLM behaves.")
                      :description "The buffer to retrieve contents from."))
  :category "emacs-buffer")
 
-(defun gptel-tool-library-buffer--set-buffer-pos (buffer pos)
+(defun eai-tool-library-buffer--set-buffer-pos (buffer pos)
   "Set the last read position for buffer."
   (with-current-buffer buffer
-    (unless (local-variable-p 'gptel-tool-library-buffer--last-read-pos)
-      (make-local-variable 'gptel-tool-library-buffer--last-read-pos))
-    (setq gptel-tool-library-buffer--last-read-pos pos)))
+    (unless (local-variable-p 'eai-tool-library-buffer--last-read-pos)
+      (make-local-variable 'eai-tool-library-buffer--last-read-pos))
+    (setq eai-tool-library-buffer--last-read-pos pos)))
 
-(defun gptel-tool-library-buffer--get-buffer-pos (buffer)
+(defun eai-tool-library-buffer--get-buffer-pos (buffer)
   "Get the last read position for buffer."
   (with-current-buffer buffer
-    (unless (local-variable-p 'gptel-tool-library-buffer--last-read-pos)
-      (make-local-variable 'gptel-tool-library-buffer--last-read-pos)
-      (setq gptel-tool-library-buffer--last-read-pos (point-min)))
-    gptel-tool-library-buffer--last-read-pos))
+    (unless (local-variable-p 'eai-tool-library-buffer--last-read-pos)
+      (make-local-variable 'eai-tool-library-buffer--last-read-pos)
+      (setq eai-tool-library-buffer--last-read-pos (point-min)))
+    eai-tool-library-buffer--last-read-pos))
 
-(defun gptel-tool-library-buffer--list-buffers (&optional arg)
+(defun eai-tool-library-buffer--list-buffers (&optional arg)
   "Return list of buffers."
-  (gptel-tool-library--debug-log (format "list-buffers %s" (or arg "")))
+  (eai-tool-library--debug-log (format "list-buffers %s" (or arg "")))
   (list-buffers-noselect)
   (with-current-buffer "*Buffer List*"
     (let ((content (buffer-string)))
       content)))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-buffer-tools
- :function #'gptel-tool-library-buffer--list-buffers
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-buffer-tools
+ :function #'eai-tool-library-buffer--list-buffers
  :name  "list-buffers"
  :category "emacs-buffer"
  :description "List buffers open in Emacs, including file names and full paths. After using this, stop. Then evaluate which files are most likely to be relevant to the user's request."
  :category "emacs-buffer")
 
-(defun gptel-tool-library-buffer--get-in-direction (direction)
+(defun eai-tool-library-buffer--get-in-direction (direction)
   "Return the name of the buffer in the window in DIRECTION from current window.
 
 DIRECTION should be one of \='left, \='right, \='above, \='below, \='left-above,
 \='left-below, \='right-above, or \='right-below (as symbols or strings).
 
 If there is no window in that direction, return nil."
-  (gptel-tool-library--debug-log (format "buffer-in-direction %s" direction))
+  (eai-tool-library--debug-log (format "buffer-in-direction %s" direction))
   (let* ((dir-sym (if (symbolp direction)
                       direction
                     (intern direction)))
@@ -173,9 +173,9 @@ If there is no window in that direction, return nil."
     (when win
       (buffer-name (window-buffer win)))))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-buffer-tools
- :function #'gptel-tool-library-buffer--get-in-direction
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-buffer-tools
+ :function #'eai-tool-library-buffer--get-in-direction
  :name "get-in-direction"
  :category "emacs-buffer"
  :description
@@ -186,16 +186,16 @@ If there is no window in that direction, return nil."
                      :description "The direction to search, one of left, right, above, below, right-above, right-below, left-above, left-below ."))
  :category "emacs-buffer")
 
-(defun gptel-tool-library-buffer--erase-buffer (buffer)
+(defun eai-tool-library-buffer--erase-buffer (buffer)
   "Erase contents of BUFFER."
-  (gptel-tool-library--debug-log (format "erase-buffer %s" buffer))
+  (eai-tool-library--debug-log (format "erase-buffer %s" buffer))
   (let ((buffer (get-buffer-create buffer)))
     (with-current-buffer buffer
       (erase-buffer))))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-buffer-tools-maybe-safe
- :function #'gptel-tool-library-buffer--erase-buffer
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-buffer-tools-maybe-safe
+ :function #'eai-tool-library-buffer--erase-buffer
  :name  "erase-buffer"
  :description "Erase buffers contents. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
  :args (list '(:name "buffer"
@@ -203,16 +203,16 @@ If there is no window in that direction, return nil."
                      :description "The buffer to erase contents in."))
  :category "emacs-buffer")
 
-(defun gptel-tool-library-buffer--buffer-size (buffer)
+(defun eai-tool-library-buffer--buffer-size (buffer)
   "Return the size of BUFFER."
-  (gptel-tool-library--debug-log (format "buffer-size %s" buffer))
+  (eai-tool-library--debug-log (format "buffer-size %s" buffer))
   (let ((buffer (get-buffer-create buffer)))
     (with-current-buffer buffer
       (buffer-size))))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-buffer-tools
- :function #'gptel-tool-library-buffer--buffer-size
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-buffer-tools
+ :function #'eai-tool-library-buffer--buffer-size
  :name  "buffer-size"
  :description "Read a buffers contents. If the buffer does not exist create it first. After calling this tool, stop. Then continue fulfilling user's request."
  :args (list '(:name "buffer"
@@ -220,17 +220,17 @@ If there is no window in that direction, return nil."
                      :description "The buffer to get the size from."))
  :category "emacs-buffer")
 
-(defun gptel-tool-library-buffer--replace-region (buffer from to text)
+(defun eai-tool-library-buffer--replace-region (buffer from to text)
   "Replace text in BUFFER from FROM to TO with TEXT"
-  (gptel-tool-library--debug-log (format "replace-region %s->%s in %s with %s" from to buffer text))
+  (eai-tool-library--debug-log (format "replace-region %s->%s in %s with %s" from to buffer text))
   (with-current-buffer buffer
     (delete-region from to)
     (goto-char from)
     (insert text)))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-buffer-tools-maybe-safe
- :function #'gptel-tool-library-buffer--replace-region
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-buffer-tools-maybe-safe
+ :function #'eai-tool-library-buffer--replace-region
  :name  "replace-region"
  :description "Replace a region in a buffer with new text. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
  :args (list '(:name "buffer"
@@ -247,15 +247,15 @@ If there is no window in that direction, return nil."
                      :description "The text to replace the region with."))
  :category "emacs-buffer")
 
-(defun gptel-tool-library-buffer--remove-region (buffer from to)
+(defun eai-tool-library-buffer--remove-region (buffer from to)
   "Remove region from FROM to TO in buffer BUFFER"
-  (gptel-tool-library--debug-log (format "remove-region %s->%s from %s" from to buffer))
+  (eai-tool-library--debug-log (format "remove-region %s->%s from %s" from to buffer))
   (with-current-buffer buffer
     (delete-region from to)))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-buffer-tools-maybe-safe
- :function #'gptel-tool-library-buffer--remove-region
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-buffer-tools-maybe-safe
+ :function #'eai-tool-library-buffer--remove-region
  :name  "remove-region"
  :description "Remove a region in a buffer with new text. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
  :args (list '(:name "buffer"
@@ -269,16 +269,16 @@ If there is no window in that direction, return nil."
                      :description "The end of the region."))
  :category "emacs-buffer")
 
-(defun gptel-tool-library-buffer--insert-at (buffer at text)
+(defun eai-tool-library-buffer--insert-at (buffer at text)
   "Move point in buffer BUFFER to AT, and then insert TEXT"
-  (gptel-tool-library--debug-log (format "insert-at %s at %s in %s" text at buffer))
+  (eai-tool-library--debug-log (format "insert-at %s at %s in %s" text at buffer))
   (with-current-buffer buffer
     (goto-char (+ 1 at))
     (insert text)))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-buffer-tools
- :function #'gptel-tool-library-buffer--insert-at
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-buffer-tools
+ :function #'eai-tool-library-buffer--insert-at
  :name  "insert-at"
  :description "At text in a buffer at a specific location. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
  :args (list '(:name "buffer"
@@ -293,8 +293,8 @@ If there is no window in that direction, return nil."
  :category "emacs-buffer")
 
 ;; the following tools directly make existing functions available
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-buffer-tools
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-buffer-tools
  :function #'get-buffer-create
  :name  "get-buffer-create"
  :description "Use get-buffer-create to create or get a buffer. After calling this tool, stop. Then continue fulfilling user's request."
@@ -303,8 +303,8 @@ If there is no window in that direction, return nil."
                      :description "The buffer to create or retrieve."))
  :category "emacs-buffer")
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-buffer-tools
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-buffer-tools
  :function #'switch-to-buffer
  :name  "switch-to-buffer"
  :description "Use switch-to-buffer to switch to a buffer. After calling this tool, stop. Then continue fulfilling user's request."
@@ -313,5 +313,5 @@ If there is no window in that direction, return nil."
                      :description "The buffer to switch to."))
  :category "emacs-buffer")
 
-(provide 'gptel-tool-library-buffer)
-;;; gptel-tool-library-buffer.el ends here
+(provide 'eai-tool-library-buffer)
+;;; eai-tool-library-buffer.el ends here

@@ -1,4 +1,4 @@
-;;; gptel-tool-library-search-and-replace.el --- -*- lexical-binding: t; -*-
+;;; eai-tool-library-search-and-replace.el --- -*- lexical-binding: t; -*-
 ;;
 ;; Author: Bernd Wachter
 ;;
@@ -99,6 +99,6 @@ Optional region from START to END bounds the search (defaults to whole buffer)."
           (goto-char (point))))))
   (message "Done replacing with smerge conflict blocks."))
 
-(provide 'gptel-tool-library-search-and-replace)
+(provide 'eai-tool-library-search-and-replace)
 
-;;; gptel-tool-library-search-and-replace.el ends here
+;;; eai-tool-library-search-and-replace.el ends here

@@ -1,4 +1,4 @@
-;;; gptel-tool-library-bbdb.el --- Tools to pull information from BBDB -*- lexical-binding: t; -*-
+;;; eai-tool-library-bbdb.el --- Tools to pull information from BBDB -*- lexical-binding: t; -*-
 ;;
 ;; Author: Bernd Wachter
 ;;
@@ -29,22 +29,22 @@
 (declare-function bbdb-records "bbdb" ())
 (declare-function bbdb-search "bbdb-com" (records &rest spec))
 
-(require 'gptel-tool-library)
+(require 'eai-tool-library)
 (eval-when-compile
   (ignore-errors
     (require 'bbdb)))
 
-(defvar gptel-tool-library-bbdb-tools '()
+(defvar eai-tool-library-bbdb-tools '()
   "The list of BBDB related tools")
 
-(defun gptel-tool-library-bbdb--bbdb-search (name)
+(defun eai-tool-library-bbdb--bbdb-search (name)
   "Search bbdb for NAME"
-  (gptel-tool-library--debug-log (format "bbdb-search %s" name))
+  (eai-tool-library--debug-log (format "bbdb-search %s" name))
   (bbdb-search (bbdb-records) :name name))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-bbdb-tools
- :function #'gptel-tool-library-bbdb--bbdb-search
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-bbdb-tools
+ :function #'eai-tool-library-bbdb--bbdb-search
  :name  "bbdb-search"
  :description "Return a bbdb entry for name, or nil if not found. After calling this tool, stop. Then continue fulfilling user's request."
  :args (list '(:name "name"
@@ -52,15 +52,15 @@
                      :description "The name to search for"))
  :category "bbdb")
 
-(defun gptel-tool-library-bbdb--bbdb-search-anniversary (anniversary-type)
+(defun eai-tool-library-bbdb--bbdb-search-anniversary (anniversary-type)
   "Search bbdb for anniversary with ANNIVERSARY-TYPE"
-  (gptel-tool-library--debug-log (format "search-anniversary %s" anniversary-type))
+  (eai-tool-library--debug-log (format "search-anniversary %s" anniversary-type))
   (let ((_bbdb-default-xfield 'anniversary))
     (bbdb-search (bbdb-records) :xfield anniversary-type)))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-bbdb-tools
- :function #'gptel-tool-library-bbdb--bbdb-search-anniversary
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-bbdb-tools
+ :function #'eai-tool-library-bbdb--bbdb-search-anniversary
  :name  "bbdb-search-anniversary"
  :description "Return or a specific anniversary type. After calling this tool, stop. Then continue fulfilling user's request."
  :args (list '(:name "anniversary-type"
@@ -68,5 +68,5 @@
                      :description "The anniversary to search for, for example 'birthday' for birthdays"))
  :category "bbdb")
 
-(provide 'gptel-tool-library-bbdb)
-;;; gptel-tool-library-bbdb.el ends here
+(provide 'eai-tool-library-bbdb)
+;;; eai-tool-library-bbdb.el ends here

@@ -1,4 +1,4 @@
-;;; gptel-tool-library-elisp.el --- Functions to help with elisp development -*- lexical-binding: t; -*-
+;;; eai-tool-library-elisp.el --- Functions to help with elisp development -*- lexical-binding: t; -*-
 ;;
 ;; Author: Bernd Wachter
 ;;
@@ -27,28 +27,28 @@
 ;;
 ;;; Code:
 
-(require 'gptel-tool-library)
+(require 'eai-tool-library)
 
-(defvar gptel-tool-library-elisp-tools '()
+(defvar eai-tool-library-elisp-tools '()
   "The list of elisp related tools")
 
-(defvar gptel-tool-library-elisp-tools-maybe-safe '()
+(defvar eai-tool-library-elisp-tools-maybe-safe '()
   "The list of elisp related tools which may be destructive, but typically
 the LLM behaves.")
 
-(defvar gptel-tool-library-elisp-tools-unsafe '()
+(defvar eai-tool-library-elisp-tools-unsafe '()
   "The list of buffer related tools which are not safe.")
 
-(defun gptel-tool-library-elisp--run-eval (command)
+(defun eai-tool-library-elisp--run-eval (command)
   "Return output of elisp eval COMMAND."
-  (gptel-tool-library--debug-log (format "eval %s" command))
+  (eai-tool-library--debug-log (format "eval %s" command))
   (eval (if (stringp command)
             (car (read-from-string (format "(progn %s)" command)))
           command)))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-elisp-tools-unsafe
- :function #'gptel-tool-library-elisp--run-eval
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-elisp-tools-unsafe
+ :function #'eai-tool-library-elisp--run-eval
  :name  "eval"
  :description "Use eval to evaluate elisp code. After calling this tool, stop. Then continue fulfilling user's request."
  :args (list '(:name "command"
@@ -57,7 +57,7 @@ the LLM behaves.")
  :category "elisp"
  :confirm t)
 
-(defun gptel-tool-library-elisp--defun-region (function-name &optional buffer)
+(defun eai-tool-library-elisp--defun-region (function-name &optional buffer)
   "Return (START . END) points around FUNCTION-NAME defun in BUFFER.
 
 If BUFFER is nil, use the current buffer. Points are just before and after
@@ -75,9 +75,9 @@ the defun."
         (message "Function `%s` not found in buffer %s" function-name (buffer-name))
         nil))))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-elisp-tools
- :function #'gptel-tool-library-elisp--defun-region
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-elisp-tools
+ :function #'eai-tool-library-elisp--defun-region
  :name  "defun-region"
  :description "Read starting end end point of a function definition."
  :args (list '(:name "function"
@@ -88,11 +88,11 @@ the defun."
                      :description "The buffer to search in"))
  :category "elisp")
 
-(defun gptel-tool-library-elisp--replace-defun-region (function-name new-string &optional buffer)
+(defun eai-tool-library-elisp--replace-defun-region (function-name new-string &optional buffer)
   "Replace the entire FUNCTION-NAME region with NEW-STRING.
 
 Use BUFFER or current buffer if BUFFER is nil."
-  (let ((bounds (gptel-tool-library-elisp--defun-region function-name buffer)))
+  (let ((bounds (eai-tool-library-elisp--defun-region function-name buffer)))
     (if bounds
         (with-current-buffer (or buffer (current-buffer))
           (save-excursion
@@ -101,14 +101,14 @@ Use BUFFER or current buffer if BUFFER is nil."
             (insert new-string)))
       (message "Function `%s` not found for replacement" function-name))))
 
-(defun gptel-tool-library-elisp--smerge-replace-defun-region (function-name new-string &optional buffer)
+(defun eai-tool-library-elisp--smerge-replace-defun-region (function-name new-string &optional buffer)
   "Insert smerge conflict markers for FUNCTION-NAME region with NEW-STRING.
 
 Operate in BUFFER or current buffer if BUFFER is nil."
   (interactive "sFunction name: \nsNew function text: \nBBuffer (optional): ")
   (let ((buf (or buffer (current-buffer)))
         bounds old-text conflict-text)
-    (setq bounds (gptel-tool-library-elisp--defun-region function-name buf))
+    (setq bounds (eai-tool-library-elisp--defun-region function-name buf))
     (if (not bounds)
         (message "Function `%s` not found in buffer %s" function-name (buffer-name buf))
       (with-current-buffer buf
@@ -125,9 +125,9 @@ Operate in BUFFER or current buffer if BUFFER is nil."
         (smerge-mode 1)
         (message "Inserted smerge-style conflict for function `%s`" function-name)))))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-elisp-tools-maybe-safe
- :function #'gptel-tool-library-elisp--smerge-replace-defun-region
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-elisp-tools-maybe-safe
+ :function #'eai-tool-library-elisp--smerge-replace-defun-region
  :name  "smerge-replace-defun-region"
  :description "Search for a function name, and replace the complete defun with a diff block. After calling this tool, stop. Then continue fulfilling user's request."
  :args (list '(:name "function-name"
@@ -141,17 +141,17 @@ Operate in BUFFER or current buffer if BUFFER is nil."
                      :description "The buffer to perform the replacement"))
  :category "elisp")
 
-(defun gptel-tool-library-elisp-variable-doc (name)
+(defun eai-tool-library-elisp-variable-doc (name)
   "Try to return documentation for variable NAME"
-  (gptel-tool-library--debug-log (format "elisp-variable-doc: %s" name))
+  (eai-tool-library--debug-log (format "elisp-variable-doc: %s" name))
   (let ((var (intern-soft name)))
     (if (and var (boundp var))
         (documentation-property var 'variable-documentation)
       (format "No documentation found for variable: %s" name))))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-elisp-tools
- :function #'gptel-tool-library-elisp-variable-doc
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-elisp-tools
+ :function #'eai-tool-library-elisp-variable-doc
  :name "elisp-variable-doc"
  :category "elisp"
  :description "Retrieve the documentation for an Elisp variable."
@@ -159,17 +159,17 @@ Operate in BUFFER or current buffer if BUFFER is nil."
                      :type "string"
                      :description "The name of the variable to retrieve documentation for.")))
 
-(defun gptel-tool-library-elisp-function-doc (name)
+(defun eai-tool-library-elisp-function-doc (name)
   "Try to return documentation for function NAME"
-    (gptel-tool-library--debug-log (format "elisp-function-doc: %s" name))
+    (eai-tool-library--debug-log (format "elisp-function-doc: %s" name))
     (let ((func (intern-soft name)))
       (if (and func (fboundp func))
           (documentation func)
         (format "No documentation found for function: %s" name))))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-elisp-tools
- :function #'gptel-tool-library-elisp-function-doc
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-elisp-tools
+ :function #'eai-tool-library-elisp-function-doc
  :name "elisp-function-doc"
  :category "elisp"
  :description "Retrieve the documentation for an Elisp function."
@@ -177,7 +177,7 @@ Operate in BUFFER or current buffer if BUFFER is nil."
                      :type "string"
                      :description "The name of the function to retrieve documentation for.")))
 
-(defun gptel-tool-library-elisp-describe-symbol (name)
+(defun eai-tool-library-elisp-describe-symbol (name)
   "Return the source code for function or variable NAME as a string.
 If source isn't found, falls back to the Emacs Lisp object sexp."
        (let* ((sym (if (symbolp name) name (intern name)))
@@ -199,9 +199,9 @@ If source isn't found, falls back to the Emacs Lisp object sexp."
                          (symbol-value sym))))
               (pp-to-string obj))))))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-elisp-tools
- :function #'gptel-tool-library-elisp-describe-symbol
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-elisp-tools
+ :function #'eai-tool-library-elisp-describe-symbol
  :name "elisp-describe-symbol"
  :category "elisp"
  :description "Return source code for function or variable."
@@ -209,12 +209,12 @@ If source isn't found, falls back to the Emacs Lisp object sexp."
                      :type "string"
                      :description "The name of the symbol to receive sources for.")))
 
-(defun gptel-tool-library-elisp-describe-symbol-fuzzy (_name &optional _limit)
+(defun eai-tool-library-elisp-describe-symbol-fuzzy (_name &optional _limit)
   "List functions and variables fuzzily matching NAME, with a summary.
 
 Optionally limit the number of results returned."
   (lambda (name &optional limit)
-    (gptel-tool-library--debug-log (format "elisp_fuzzy_match: %s, limit: %s" name limit))
+    (eai-tool-library--debug-log (format "elisp_fuzzy_match: %s, limit: %s" name limit))
     (let ((matches '()))
       ;; Search functions
       (mapatoms (lambda (sym)
@@ -242,9 +242,9 @@ Optionally limit the number of results returned."
 ")
         (format "No matches found for name: %s" name)))))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-elisp-tools
- :function #'gptel-tool-library-elisp-describe-symbol-fuzzy
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-elisp-tools
+ :function #'eai-tool-library-elisp-describe-symbol-fuzzy
  :name "elisp-fuzzy-match"
  :category "elisp"
  :description "List all functions and variables that fuzzily match the given name, along with a one-sentence summary, with an optional limit on the number of results."
@@ -256,5 +256,5 @@ Optionally limit the number of results returned."
                      :optional t
                      :description "The maximum number of results to return. If nil, returns all matches.")))
 
-(provide 'gptel-tool-library-elisp)
-;;; gptel-tool-library-elisp.el ends here
+(provide 'eai-tool-library-elisp)
+;;; eai-tool-library-elisp.el ends here

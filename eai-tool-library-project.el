@@ -1,4 +1,4 @@
-;;; gptel-tool-library-project.el --- Tools related to project handling -*- lexical-binding: t; -*-
+;;; eai-tool-library-project.el --- Tools related to project handling -*- lexical-binding: t; -*-
 ;;
 ;; Author: Bernd Wachter
 ;;
@@ -26,21 +26,21 @@
 ;;
 ;;; Code:
 
-(require 'gptel-tool-library)
+(require 'eai-tool-library)
 (require 'project)
 
-(defvar gptel-tool-library-project-tools '()
+(defvar eai-tool-library-project-tools '()
   "The list of emacs related tools")
 ;; we skip the other two variables as this module should only contain safe tools
 
-(defun gptel-tool-library-project--current (&optional project)
+(defun eai-tool-library-project--current (&optional project)
   "Return the project for `project', or current directory"
   (or (and project (project-current nil project))
       (project-current)))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-project-tools
- :function #'gptel-tool-library-project--current
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-project-tools
+ :function #'eai-tool-library-project--current
  :name  "project-current"
  :description "Return the root directory of a project, or nil, if not in a project."
  :args (list '(:name "project"
@@ -49,7 +49,7 @@
                      :optional t))
  :category "project")
 
-(defun gptel-tool-library-project--files (&optional project dirs)
+(defun eai-tool-library-project--files (&optional project dirs)
   "Return list of files in the current project.
 
 Optional DIRS is a list of directories within the project to filter by."
@@ -69,9 +69,9 @@ Optional DIRS is a list of directories within the project to filter by."
                  files)))
         filtered-files))))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-project-tools
- :function #'gptel-tool-library-project--files
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-project-tools
+ :function #'eai-tool-library-project--files
  :name  "project-files"
  :description "Returns the files contained in a project, optionally limited to subdirectories."
  :args (list '(:name "project"
@@ -84,7 +84,7 @@ Optional DIRS is a list of directories within the project to filter by."
                      :optional t))
  :category "project")
 
-(defun gptel-tool-library-project--buffers (&optional project)
+(defun eai-tool-library-project--buffers (&optional project)
   "Return list of buffers visiting files in the current project.
 Optional DIRS is a list of directories within the project to filter by."
   (let* ((project (or (and project (project-current nil project))
@@ -93,9 +93,9 @@ Optional DIRS is a list of directories within the project to filter by."
         (message "Not currently in a project")
       (project-buffers project))))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-project-tools
- :function #'gptel-tool-library-project--buffers
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-project-tools
+ :function #'eai-tool-library-project--buffers
  :name  "project-buffers"
  :description "Returns the open buffers related to a project."
  :args (list '(:name "project"
@@ -104,5 +104,5 @@ Optional DIRS is a list of directories within the project to filter by."
                      :optional t))
  :category "project")
 
-(provide 'gptel-tool-library-project)
-;;; gptel-tool-library-project.el ends here
+(provide 'eai-tool-library-project)
+;;; eai-tool-library-project.el ends here

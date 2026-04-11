@@ -1,4 +1,4 @@
-;;; gptel-tool-library-url.el --- URL based LLM bindings -*- lexical-binding: t; -*-
+;;; eai-tool-library-url.el --- URL based LLM bindings -*- lexical-binding: t; -*-
 ;;
 ;; Author: Bernd Wachter
 ;;
@@ -23,30 +23,30 @@
 ;;
 ;;; Code:
 
-(require 'gptel-tool-library)
+(require 'eai-tool-library)
 
-(defvar gptel-tool-library-url-tools '()
+(defvar eai-tool-library-url-tools '()
   "The list of buffer turtle related tools")
 
-(defvar gptel-tool-library-url-tools-maybe-safe '()
+(defvar eai-tool-library-url-tools-maybe-safe '()
   "The list of buffer turtle related tools which may be destructive, but typically
 the LLM behaves.")
 
-(defvar gptel-tool-library-url-tools-unsafe '()
+(defvar eai-tool-library-url-tools-unsafe '()
   "The list of buffer related related tools which are not safe.")
 
-(defun gptel-tool-library-url--get-url (url)
+(defun eai-tool-library-url--get-url (url)
   "Return the content of the URL at URL"
-  (gptel-tool-library--debug-log (format "get-url %s" url))
+  (eai-tool-library--debug-log (format "get-url %s" url))
   (let ((buffer (url-retrieve-synchronously url)))
     (when buffer
       (with-current-buffer buffer
         (message (format "LLM pulls URL %s" url))
         (concat (buffer-string))))))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-url-tools-unsafe
- :function #'gptel-tool-library-url--get-url
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-url-tools-unsafe
+ :function #'eai-tool-library-url--get-url
  :name  "get-url"
  :description "rectrieve an url. after calling this tool, stop. then continue fulfilling user's request."
  :args (list '(:name "url"
@@ -55,9 +55,9 @@ the LLM behaves.")
  :category "url"
  :confirm t)
 
-(defun gptel-tool-library-url--get-website (url)
+(defun eai-tool-library-url--get-website (url)
   "return the content of the url as rendered page."
-  (gptel-tool-library--debug-log (format "get-website %s" url))
+  (eai-tool-library--debug-log (format "get-website %s" url))
   (let ((buffer (url-retrieve-synchronously url)))
     (if  buffer
         (with-current-buffer buffer
@@ -66,9 +66,9 @@ the LLM behaves.")
           (concat (buffer-substring-no-properties (point-min) (point-max))))
       "unable to load website")))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-url-tools-unsafe
- :function #'gptel-tool-library-url--get-website
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-url-tools-unsafe
+ :function #'eai-tool-library-url--get-website
  :name  "get-website"
  :description "rectrieve a website and render it. after calling this tool, stop. then continue fulfilling user's request."
  :args (list '(:name "url"
@@ -76,5 +76,5 @@ the LLM behaves.")
                      :description "the url to retrieve."))
  :category "url")
 
-(provide 'gptel-tool-library-url)
-;;; gptel-tool-library-url.el ends here
+(provide 'eai-tool-library-url)
+;;; eai-tool-library-url.el ends here

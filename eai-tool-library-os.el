@@ -1,4 +1,4 @@
-;;; gptel-tool-library-os.el --- OS interaction tools -*- lexical-binding: t; -*-
+;;; eai-tool-library-os.el --- OS interaction tools -*- lexical-binding: t; -*-
 ;;
 ;; Author: Bernd Wachter
 ;;
@@ -22,32 +22,32 @@
 ;;
 ;;; Code:
 
-(require 'gptel-tool-library)
+(require 'eai-tool-library)
 
-(defvar gptel-tool-library-os-tools '()
+(defvar eai-tool-library-os-tools '()
   "The list of OS related tools")
 
-(defvar gptel-tool-library-os-tools-maybe-safe '()
+(defvar eai-tool-library-os-tools-maybe-safe '()
   "The list of OS related tools which may be destructive, but typically
 the LLM behaves.")
 
-(defvar gptel-tool-library-os-tools-unsafe '()
+(defvar eai-tool-library-os-tools-unsafe '()
   "The list of OS related tools which are not safe.")
 
-(defvar gptel-tool-library-os-category-name "OS"
+(defvar eai-tool-library-os-category-name "OS"
   "The buffer category used for tool registration")
 
-(defun gptel-tool-library-os--run-shell (command)
+(defun eai-tool-library-os--run-shell (command)
   "Return output of SHELL COMMAND."
-  (gptel-tool-library--debug-log (format "shell %s" command))
+  (eai-tool-library--debug-log (format "shell %s" command))
   (with-temp-buffer
     (shell-command command (current-buffer) nil)
     (concat
      (buffer-string))))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-os-tools-unsafe
- :function #'gptel-tool-library-os--run-shell
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-os-tools-unsafe
+ :function #'eai-tool-library-os--run-shell
  :name  "run-shell"
  :description "Executs a bash shell command and returns its output. After calling this tool, stop. Then continue fulfilling user's request."
  :args (list '(:name "command"
@@ -56,17 +56,17 @@ the LLM behaves.")
  :category "OS"
  :confirm t)
 
-(defun gptel-tool-library-os--read-file-contents (filename)
+(defun eai-tool-library-os--read-file-contents (filename)
   "Return contents of FILE."
-  (gptel-tool-library--debug-log (format "read-file-contents %s" filename))
+  (eai-tool-library--debug-log (format "read-file-contents %s" filename))
   (with-temp-buffer
     (insert-file-contents (expand-file-name filename))
     (concat
      (buffer-string))))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-os-tools-maybe-safe
- :function #'gptel-tool-library-os--read-file-contents
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-os-tools-maybe-safe
+ :function #'eai-tool-library-os--read-file-contents
  :name  "read-file-contents"
  :description "Reads and return the contents of a specified file. After calling this tool, stop. Then continue fulfilling user's request."
  :args (list '(:name "filename"
@@ -74,7 +74,7 @@ the LLM behaves.")
                      :description "The filename to read."))
  :category "OS")
 
-(defun gptel-tool-library-os--get-default-directory (&optional buffer-name)
+(defun eai-tool-library-os--get-default-directory (&optional buffer-name)
   "Return the `default-directory' of BUFFER-NAME, or the current buffer if nil.
 BUFFER-NAME is a string or buffer object. If nil, use the current buffer."
   (let ((buffer (if buffer-name
@@ -83,9 +83,9 @@ BUFFER-NAME is a string or buffer object. If nil, use the current buffer."
     (with-current-buffer buffer
       default-directory)))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-os-tools
- :function #'gptel-tool-library-os--get-default-directory
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-os-tools
+ :function #'eai-tool-library-os--get-default-directory
  :name  "get-current-directory"
  :description "Return the default-directory of BUFFER-NAME, or the current buffer if nil."
  :args (list
@@ -95,7 +95,7 @@ BUFFER-NAME is a string or buffer object. If nil, use the current buffer."
                 :description "Optional name of buffer to query; when omitted, use current buffer."))
  :category "OS")
 
-(defun gptel-tool-library-os--set-default-directory (directory &optional buffer-name)
+(defun eai-tool-library-os--set-default-directory (directory &optional buffer-name)
   "Set `default-directory' to DIRECTORY for BUFFER-NAME, or the current buffer.
 
 DIRECTORY is a string. BUFFER-NAME is a string or buffer object. If nil, use the
@@ -106,9 +106,9 @@ current buffer."
     (with-current-buffer buffer
       (setq default-directory (expand-file-name directory)))))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-os-tools-maybe-safe
- :function #'gptel-tool-library-os--set-default-directory
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-os-tools-maybe-safe
+ :function #'eai-tool-library-os--set-default-directory
  :name  "set-current-directory"
  :description "Set default-directory to DIRECTORY for BUFFER-NAME, or the current buffer.."
  :args (list
@@ -121,5 +121,5 @@ current buffer."
                 :description "Optional name of buffer to modify; when omitted, use the current buffer."))
  :category "OS")
 
-(provide 'gptel-tool-library-os)
-;;; gptel-tool-library-os.el ends here
+(provide 'eai-tool-library-os)
+;;; eai-tool-library-os.el ends here

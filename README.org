@@ -1,4 +1,4 @@
-* gptel-tool-library                                                  :TOC_4:
+* eai-tool-library                                                  :TOC_4:
   - [[#introduction][Introduction]]
   - [[#contributing][Contributing]]
   - [[#modules][Modules]]
@@ -9,40 +9,52 @@
 
 ** Introduction
 
-This repository contains multiple tools for LLM use through [[https://github.com/karthink/gptel][gptel]]. Tools are grouped into modules. The main library just sets up loading and unloading. The following screenshot shows a session with safe and maybe-safe tools from the emacs and buffer modules loaded:
+This repository contains multiple tools for LLM use in Emacs. The goal is to support all modes implementing a similar tool format. Currently those are:
+
+- [[https://github.com/karthink/gptel][gptel]]
+- [[https://github.com/ahyatt/llm][llm]]
+- [[https://github.com/manzaltu/claude-code-ide.el][claude-code-ide]]
+
+Tools are grouped into modules. The main library just sets up loading and unloading. The following screenshot shows a session with safe and maybe-safe tools from the emacs and buffer modules loaded:
 
 #+CAPTION: An emacs frame asking gptel for time, giraffe ascii art, and putting an emoji at a specific buffer position
 [[./pictures/demo.png]]
 
-To install, clone this directory, add it to your load path, and require =gptel-tool-library=. You also probably want to load one or more modules:
+To install, clone this directory, add it to your load path, and require =eai-tool-library=. You also probably want to load one or more modules:
 
 #+BEGIN_SRC elisp
   (add-to-list 'load-path "/path/to/clone")
-  (require 'gptel-tool-library)
+  (require 'eai-tool-library)
   ;; set this if you want to use maybe safe functions (recommended)
-  ;;(setq gptel-tool-library-use-maybe-safe t)
+  ;;(setq eai-tool-library-use-maybe-safe t)
   ;; set this if you also want to use unsafe functions
-  ;;(setq gptel-tool-library-use-unsafe t)
+  ;;(setq eai-tool-library-use-unsafe t)
   (dolist (module '("bbdb" "buffer" "elisp" "emacs" "gnus" "os"))
-    (gptel-tool-library-load-module module)))
+    (eai-tool-library-load-module module)))
 #+END_SRC
 
-Now you can load modules with =(gptel-tool-library-load-module "<buffer>")=, and unload them with =(gptel-tool-library-load-module "<module>")=. The load will:
+You must make at least the tool load function of the LLMs you intend to use available before loading modules. Module loading will register tools for all supported modes if their tool setup function is available:
+
+- for llm, this is =llm-make-tool=
+- for gptel, this is =gptel-make-tool=
+- for claude-code-ide, this is =claude-code-ide-make-tool=
+
+Now you can load modules with =(eai-tool-library-load-module "<buffer>")=, and unload them with =(eai-tool-library-load-module "<module>")=. The load will:
 
 - load the file with the module definition
-- enable all safe tools for use with your LLM. You can set =gptel-tool-library-use= to =nil= if you prefer just loading safe tool without enabling them
-- create most likely safe tools, but only enable them if =gptel-tool-library-use-maybe-safe= has been set to =t=
-- create unsafe tools, but only enable them if =gptel-tool-library-use-unsafe= has been set to =t=
+- enable all safe tools for use with your LLM. You can set =eai-tool-library-use= to =nil= if you prefer just loading safe tools without enabling them
+- create most likely safe tools, but only enable them if =eai-tool-library-use-maybe-safe= has been set to =t=
+- create unsafe tools, but only enable them if =eai-tool-library-use-unsafe= has been set to =t=
 
 Most likely safe tools are unlikely to cause damage, have not been observed to do so, and if they did cause damage would make it easy to revert (i.e., undo clearing a buffer).
 
 Unsafe tools can cause damage or unintended behaviour, but all of them prompt before execution (the others don't) - so it is also safe to have them enabled, but you may chose not to for avoiding unnecessary prompts.
 
-Tools loaded, but not enabled can be manually enabled from gptels tool menu.
+Tools loaded, but not enabled can be manually enabled from gptels tool menu. Other modes may have options to enable tools in prompts, but generally don't have an easy interface to enable or disable tools.
 
-The unload function will disable all tools from that module, and remove them from gptel, i.e., after that you also won't be able to manually enable them, until you load them again.
+The unload function will disable all tools from that module, and remove them from gptel, i.e., after that you also won't be able to manually enable them, until you load them again. Other modes may not have an easy to use way of removing tools, in which case this is a noop.
 
-If =gptel-tool-library-debug= is set to =t= (currently default) tool invocations will be logged to =gptel-tool-library-debug-buffer= (default: =*gptel-tool-debug*=), which is quite useful to follow what the LLM is trying to do.
+If =eai-tool-library-debug= is set to =t= (currently default) tool invocations will be logged to =eai-tool-library-debug-buffer= (default: =*gptel-tool-debug*=), which is quite useful to follow what the LLM is trying to do.
 
 Currently pretty much the only other starting point for gptel tools is  [[https://git.bajsicki.com/phil/gptel-org-tools][gptel-org-tools]], and the following functions either are copies or variants of functions defined there: read-file-contents, list-buffers, describe-variable and describe-function. Additionally, many tool descriptions are inspired on the descriptions from there.
 
@@ -66,15 +78,15 @@ The following projects come with their own tool bindings via this library:
 
 A module =module= must:
 
-- be named gptel-tool-library-module, in gptel-tool-library-module.el
-- =provide= gptel-tool-library-module
-- =defvar= gptel-tool-library-module-tools, gptel-tool-library-module-tools-maybe-unsafe and gptel-tool-library-module-tools-unsafe as ='()=
-- define helper functions in the gptel-tool-library-module- namespace, and define them as tools with a category matching or derived from =module=
+- be named eai-tool-library-module, in eai-tool-library-module.el
+- =provide= eai-tool-library-module
+- =defvar= eai-tool-library-module-tools, eai-tool-library-module-tools-maybe-unsafe and eai-tool-library-module-tools-unsafe as ='()=
+- define helper functions in the eai-tool-library-module- namespace, and define them as tools with a category matching or derived from =module=
 
-Additionally, it must register all tools in the same category. The category name /may/ be the module name. If it is not, a variable =gptel-tool-library-module-category-name= must be defined:
+Additionally, it must register all tools in the same category. The category name /may/ be the module name. If it is not, a variable =eai-tool-library-module-category-name= must be defined:
 
 #+BEGIN_SRC elisp
-  (defvar gptel-tool-library-module-category-name "emacs-module"
+  (defvar eai-tool-library-module-category-name "emacs-module"
     "The buffer category used for tool registration")
 #+END_SRC
 
@@ -84,9 +96,9 @@ Without proper category naming unloading of modules will not work as expected.
 
 Tools should be implemented as one or more helper functions, which then later on get registered.
 
-A helper function serving as entry point for a tool should typically start by calling =gptel-tool-library--debug-log= with its name and arguments - that way a user can trace what the LLM is trying to do.
+A helper function serving as entry point for a tool should typically start by calling =eai-tool-library--debug-log= with its name and arguments - that way a user can trace what the LLM is trying to do.
 
-Tools should respect a users set response length limit in =gptel-tool-library-max-result-size=. If the result can be filtered to reach the limit a function should implement filtering. Otherwise wrapping the function in =gptel-tool-library--limit-result= might be a good alternative - this will tell the LLM to try information gathering in a different way when exceeding the limit.
+Tools should respect a users set response length limit in =eai-tool-library-max-result-size=. If the result can be filtered to reach the limit a function should implement filtering. Otherwise wrapping the function in =eai-tool-library--limit-result= might be a good alternative - this will tell the LLM to try information gathering in a different way when exceeding the limit.
 
 **** Tool registration
 
@@ -101,10 +113,10 @@ Each of the list contains tools as generated by =gptel-make-tool= or =llm-make-t
 For just supporting one specific backend the following is fine:
 
 #+BEGIN_SRC elisp
-    (add-to-list 'gptel-tool-library-buffer-tools
+    (add-to-list 'eai-tool-library-buffer-tools
                  (gptel-make-tool
-                  :function #'gptel-tool-library-buffer--read-buffer-contents
-                  :name  "gptel-tool-library-buffer--read-buffer-contents"
+                  :function #'eai-tool-library-buffer--read-buffer-contents
+                  :name  "eai-tool-library-buffer--read-buffer-contents"
                   :description "Read a buffers contents. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
                   :args (list '(:name "buffer"
                                       :type string
@@ -112,13 +124,13 @@ For just supporting one specific backend the following is fine:
                   :category "emacs-buffer"))
 #+END_SRC
 
-For registering it for =llm= the tool function would be =llm-make-tool=. To register for all backends currently available =gptel-tool-library-make-tools= can be used. It takes the same arguments as the other tool functions, but returns a list of tools. So to register its results the code would look like this:
+For registering it for =llm= the tool function would be =llm-make-tool=. To register for all backends currently available =eai-tool-library-make-tools= can be used. It takes the same arguments as the other tool functions, but returns a list of tools. So to register its results the code would look like this:
 
 #+BEGIN_SRC elisp
-  (setq gptel-tool-library-buffer-tools (nconc 'gptel-tool-library-buffer-tools
-                 (gptel-tool-library-make-tools
-                  :function #'gptel-tool-library-buffer--read-buffer-contents
-                  :name  "gptel-tool-library-buffer--read-buffer-contents"
+  (setq eai-tool-library-buffer-tools (nconc 'eai-tool-library-buffer-tools
+                 (eai-tool-library-make-tools
+                  :function #'eai-tool-library-buffer--read-buffer-contents
+                  :name  "eai-tool-library-buffer--read-buffer-contents"
                   :description "Read a buffers contents. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
                   :args (list '(:name "buffer"
                                       :type string
@@ -129,10 +141,10 @@ For registering it for =llm= the tool function would be =llm-make-tool=. To regi
 The =setq= can be skipped if the variable is known to be non-nil. There's also a function taking a list as first argument, adding the generated tools to that list:
 
 #+BEGIN_SRC elisp
-  (gptel-tool-library-make-tools-and-register
-   'gptel-tool-library-buffer-tools
-   :function #'gptel-tool-library-buffer--read-buffer-contents
-   :name  "gptel-tool-library-buffer--read-buffer-contents"
+  (eai-tool-library-make-tools-and-register
+   'eai-tool-library-buffer-tools
+   :function #'eai-tool-library-buffer--read-buffer-contents
+   :name  "eai-tool-library-buffer--read-buffer-contents"
    :description "Read a buffers contents. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
    :args (list '(:name "buffer"
                        :type string

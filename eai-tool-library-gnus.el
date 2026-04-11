@@ -1,4 +1,4 @@
-;;; gptel-tool-library-gnus.el --- LLM integration with GNUS -*- lexical-binding: t; -*-
+;;; eai-tool-library-gnus.el --- LLM integration with GNUS -*- lexical-binding: t; -*-
 ;;
 ;; Author: Bernd Wachter
 ;;
@@ -24,25 +24,25 @@
 ;;
 ;;; Code:
 
-(require 'gptel-tool-library)
+(require 'eai-tool-library)
 (require 'gnus-msg)
 
-(defvar gptel-tool-library-gnus-tools '()
+(defvar eai-tool-library-gnus-tools '()
   "The list of gnus related tools")
 
-(defvar gptel-tool-library-gnus-tools-maybe-safe '()
+(defvar eai-tool-library-gnus-tools-maybe-safe '()
   "The list of gnus related tools which may be destructive, but typically
 the LLM behaves.")
 
-(defun gptel-tool-library-gnus--compose-email (to-address subject text)
+(defun eai-tool-library-gnus--compose-email (to-address subject text)
   "Open an email compose buffer '*new message*' to to-address with subject subject."
-  (gptel-tool-library--debug-log (format "compose-email to %s with subject %s" to-address subject))
+  (eai-tool-library--debug-log (format "compose-email to %s with subject %s" to-address subject))
   (gnus-setup-message 'message (message-mail to-address subject))
   (insert (concat "\n" text)))
 
-(gptel-tool-library-make-tools-and-register
- 'gptel-tool-library-gnus-tools-maybe-safe
- :function #'gptel-tool-library-gnus--compose-email
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-gnus-tools-maybe-safe
+ :function #'eai-tool-library-gnus--compose-email
  :name  "compose-email"
  :description "Open an email compose buffer and set subject, to-address and body. After calling this tool, stop. Then continue fulfilling user's request."
  :args (list '(:name "to-address"
@@ -56,5 +56,5 @@ the LLM behaves.")
                      :description "The body text of the email"))
  :category "gnus")
 
-(provide 'gptel-tool-library-gnus)
-;;; gptel-tool-library-gnus.el ends here
+(provide 'eai-tool-library-gnus)
+;;; eai-tool-library-gnus.el ends here
