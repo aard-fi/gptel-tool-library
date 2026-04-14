@@ -212,6 +212,7 @@ If not in a project, offer to cd elsewhere or init a Git repo. Aborts on user ca
                  (not (string-empty-p eai-code-default-model)))
         (setq-local gptel-model eai-code-default-model))
 
+      (local-set-key (kbd "C-g") #'gptel-abort)
       (gptel-mode))
     (switch-to-buffer chat-buf)))
 
