@@ -392,8 +392,8 @@ Return the final RESULT list (in reverse order, to be nreversed by caller)."
      (t
       (let ((name (car item))
             (pos (if (overlayp (cdr item))
-                      (overlay-start (cdr item))
-                    (marker-position (cdr item)))))
+                     (overlay-start (cdr item))
+                   (marker-position (cdr item)))))
         (push (list :name (if prefix (concat prefix "/" name) name)
                     :type "imenu"
                     :from pos
@@ -413,19 +413,27 @@ stripped from :to boundaries for precision."
     (let ((index (imenu-default-create-index-function))
           (result nil))
       (setq result (eai-tool-library-buffer--outline-imenu-walk index nil result))
-      (setq result (nreverse result))
-      ;; Fill in :to values: each entry's :to is the :from of the next entry,
-      ;; or point-max for the last entry.  We walk backwards through the
-      ;; ascending-order list, tracking the next entry's :from.
-      (let ((next-pos (point-max)))
+      ;; result is in reverse push order.  Sort ascending by :from.
+      (setq result (sort result
+                         (lambda (a b) (< (plist-get a :from)
+                                          (plist-get b :from)))))
+      ;; Fill in :to values by building a new list (avoid mutation issues).
+      ;; Walk backwards: each entry's :to is the trimmed position before
+      ;; the next entry, or point-max for the last entry.
+      (let ((next-from (point-max))
+            (new-result nil))
         (dolist (entry (nreverse result))
-          ;; Trim trailing whitespace from the :to boundary
-          (save-excursion
-            (goto-char next-pos)
-            (skip-chars-backward " \t\n\r")
-            (setf (plist-get entry :to) (point)))
-          (setq next-pos (plist-get entry :from))))
-      result)))
+          (let ((to-pos (save-excursion
+                          (goto-char next-from)
+                          (skip-chars-backward " \t\n\r")
+                          (point))))
+            (push (list :name (plist-get entry :name)
+                        :type (plist-get entry :type)
+                        :from (plist-get entry :from)
+                        :to to-pos)
+                  new-result)
+            (setq next-from (plist-get entry :from))))
+        new-result))))
 
 (defun eai-tool-library-buffer--outline-regex (buffer)
   "Use outline-regexp and regex matching to produce outline entries for BUFFER.
@@ -477,10 +485,7 @@ when available, falls back to imenu, then to outline-regexp matching."
     (unless result
       (with-current-buffer buffer
         (when (or imenu-generic-expression
-                  (and (fboundp #'imenu-default-create-index-function)
-                       ;; Only use imenu if the mode has something useful
-                       (let ((index (imenu-default-create-index-function)))
-                         (and index (> (length index) 0)))))
+                  (fboundp #'imenu-default-create-index-function))
           (setq result (eai-tool-library-buffer--outline-imenu buffer)))))
     ;; Last fallback: regex
     (unless result
