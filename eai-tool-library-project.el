@@ -104,5 +104,86 @@ Optional DIRS is a list of directories within the project to filter by."
                      :optional t))
  :category "project")
 
+(defun eai-tool-library-project--find-regexp (regexp &optional project dirs)
+  "Find all matches for REGEXP in the current project.
+
+Optional DIRS is a list of directories within the project to filter by."
+  (let* ((project (or (and project (project-current nil project))
+                      (project-current)))
+         (project-dir (if project (project-root project) (error "Not in a project"))))
+    (if (not project)
+        (message "Not currently in a project")
+      (let* ((files (project-files project))
+             (filtered-files files))
+        (when dirs
+          (setq filtered-files
+                (cl-remove-if-not
+                 (lambda (file)
+                   (let ((relpath (file-relative-name file project-dir)))
+                     (cl-some (lambda (dir) (string-prefix-p dir relpath)) dirs)))
+                 files)))
+        (let ((xrefs (xref-matches-in-files regexp filtered-files)))
+          (mapcar
+           (lambda (xref)
+             (let ((loc (xref-item-location xref)))
+               (list :file (xref-file-location-file loc)
+                     :line (xref-file-location-line loc)
+                     :column (xref-file-location-column loc)
+                     :summary (xref-item-summary xref))))
+           xrefs))))))
+
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-project-tools
+ :function #'eai-tool-library-project--find-regexp
+ :name  "project-find-regexp"
+ :description "Search for a regexp pattern in files within the current project, optionally limited to subdirectories. Returns a list of matches with file, line, column, and summary."
+ :args (list '(:name "regexp"
+                     :type string
+                     :description "The regular expression pattern to search for.")
+             '(:name "project"
+                     :type string
+                     :description "The path to the project directory. Current working directory when omitted."
+                     :optional t)
+             '(:name "dirs"
+                     :type array
+                     :description "A list of subdirectories of the project for limiting search results. They're expected relative to the project directory."
+                     :optional t))
+ :category "project")
+
+(defun eai-tool-library-project--locate-file (file &optional project include-all)
+  "Locate a file in the current project by name, returning its full path.
+
+FILE is a file name or pattern to search for. When INCLUDE-ALL is
+non-nil, include all files under the project root, except for VCS
+directories."
+  (let* ((project (or (and project (project-current nil project))
+                      (project-current))))
+    (if (not project)
+        (message "Not currently in a project")
+      (let ((files (project-files project)))
+        (cl-find-if
+         (lambda (f)
+           (or (string-suffix-p file f)
+               (string= file (file-name-nondirectory f))))
+         files)))))
+
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-project-tools
+ :function #'eai-tool-library-project--locate-file
+ :name  "project-locate-file"
+ :description "Locate a file in the current project by name or suffix, returning its full path."
+ :args (list '(:name "file"
+                     :type string
+                     :description "The file name or pattern to search for in the project.")
+             '(:name "project"
+                     :type string
+                     :description "The path to the project directory. Current working directory when omitted."
+                     :optional t)
+             '(:name "include-all"
+                     :type boolean
+                     :description "When non-nil, include all files under the project root, except for VCS directories."
+                     :optional t))
+ :category "project")
+
 (provide 'eai-tool-library-project)
 ;;; eai-tool-library-project.el ends here
