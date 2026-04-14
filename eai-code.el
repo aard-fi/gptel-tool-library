@@ -190,8 +190,8 @@ If not in a project, offer to cd elsewhere or init a Git repo. Aborts on user ca
          (chat-file (eai-code--get-special-file 'chat))
          (chat-buf (find-file-noselect chat-file)))
     (with-current-buffer chat-buf
-      (make-local-variable 'gptel-prompt-prefix-alist)
-      (make-local-variable 'gptel-response-prefix-alist)
+      (setq-local gptel-prompt-prefix-alist (copy-alist gptel-prompt-prefix-alist))
+      (setq-local gptel-response-prefix-alist (copy-alist gptel-response-prefix-alist))
 
       (setf (alist-get 'org-mode gptel-prompt-prefix-alist) "@developer:\n")
       (setf (alist-get 'org-mode gptel-response-prefix-alist) "@code monkey:\n")
