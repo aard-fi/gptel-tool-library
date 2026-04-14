@@ -408,10 +408,16 @@ Returns a flat list of plists with :name, :type, :from, and :to keys.
 Handles nested imenu entries by flattening them with hierarchical names.
 The :to value for each entry is derived by using the :from of the next
 entry, or the buffer end for the last entry.  Trailing whitespace is
-stripped from :to boundaries for precision."
+stripped from :to boundaries for precision.
+
+Respects the major-mode-specific `imenu-create-index-function' when
+available (e.g., `org-imenu-get-tree' for org-mode), falling back to
+`imenu-default-create-index-function' otherwise."
   (with-current-buffer buffer
-    (let ((index (imenu-default-create-index-function))
-          (result nil))
+    (let* ((index-fn (or imenu-create-index-function
+                         #'imenu-default-create-index-function))
+           (index (funcall index-fn))
+           (result nil))
       (setq result (eai-tool-library-buffer--outline-imenu-walk index nil result))
       ;; result is in reverse push order.  Sort ascending by :from.
       (setq result (sort result
@@ -484,13 +490,15 @@ when available, falls back to imenu, then to outline-regexp matching."
     ;; Fallback to imenu
     (unless result
       (with-current-buffer buffer
-        (when (or imenu-generic-expression
+        (when (or imenu-create-index-function
+                  imenu-generic-expression
                   (fboundp #'imenu-default-create-index-function))
           (setq result (eai-tool-library-buffer--outline-imenu buffer)))))
     ;; Last fallback: regex
     (unless result
       (setq result (eai-tool-library-buffer--outline-regex buffer)))
     result))
+
 (eai-tool-library-make-tools-and-register
  'eai-tool-library-buffer-tools
  :function #'eai-tool-library-buffer--outline
