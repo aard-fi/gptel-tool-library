@@ -407,7 +407,8 @@ Return the final RESULT list (in reverse order, to be nreversed by caller)."
 Returns a flat list of plists with :name, :type, :from, and :to keys.
 Handles nested imenu entries by flattening them with hierarchical names.
 The :to value for each entry is derived by using the :from of the next
-entry, or the buffer end for the last entry."
+entry, or the buffer end for the last entry.  Trailing whitespace is
+stripped from :to boundaries for precision."
   (with-current-buffer buffer
     (let ((index (imenu-default-create-index-function))
           (result nil))
@@ -418,7 +419,11 @@ entry, or the buffer end for the last entry."
       ;; ascending-order list, tracking the next entry's :from.
       (let ((next-pos (point-max)))
         (dolist (entry (nreverse result))
-          (setf (plist-get entry :to) next-pos)
+          ;; Trim trailing whitespace from the :to boundary
+          (save-excursion
+            (goto-char next-pos)
+            (skip-chars-backward " \t\n\r")
+            (setf (plist-get entry :to) (point)))
           (setq next-pos (plist-get entry :from))))
       result)))
 
