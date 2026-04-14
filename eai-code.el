@@ -69,7 +69,7 @@ A blank canvas so far.
   :type 'string
   :group 'eai-code)
 
-(defcustom eai-default-model nil
+(defcustom eai-code-default-model nil
   "The name of the default model for code sessions"
   :type 'symbol
   :group 'eai-code)
@@ -203,6 +203,14 @@ If not in a project, offer to cd elsewhere or init a Git repo. Aborts on user ca
       (when (= (buffer-size) 0)
         (insert (alist-get 'org-mode gptel-prompt-prefix-alist))
         (insert "\n"))
+
+      (when (and eai-code-default-backend
+                 (not (string-empty-p eai-code-default-backend)))
+        (setq-local gptel-backend (gptel-get-backend eai-code-default-backend)))
+
+      (when (and eai-code-default-model
+                 (not (string-empty-p eai-code-default-model)))
+        (setq-local gptel-model eai-code-default-model))
 
       (gptel-mode))
     (switch-to-buffer chat-buf)))
