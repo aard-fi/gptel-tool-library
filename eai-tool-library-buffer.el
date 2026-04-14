@@ -197,7 +197,7 @@ If there is no window in that direction, return nil."
  'eai-tool-library-buffer-tools-maybe-safe
  :function #'eai-tool-library-buffer--erase-buffer
  :name  "erase-buffer"
- :description "Erase buffers contents. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
+ :description "Erase buffers contents. If the buffer does not exist create it, and return an empty string. Note: editing Elisp code in a buffer only changes the buffer text, it does NOT update the running function definitions. To make changes take effect, the user must re-evaluate the modified definitions. Do not attempt to call the modified function immediately after editing its source to verify the edit. After calling this tool, stop. Then continue fulfilling user's request."
  :args (list '(:name "buffer"
                      :type string
                      :description "The buffer to erase contents in."))
@@ -232,7 +232,7 @@ If there is no window in that direction, return nil."
  'eai-tool-library-buffer-tools-maybe-safe
  :function #'eai-tool-library-buffer--replace-region
  :name  "replace-region"
- :description "Replace a region in a buffer with new text. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
+ :description "Replace a region in a buffer with new text. If the buffer does not exist create it, and return an empty string. Note: editing Elisp code in a buffer only changes the buffer text, it does NOT update the running function definitions. To make changes take effect, the user must re-evaluate the modified definitions. Do not attempt to call the modified function immediately after editing its source to verify the edit. After calling this tool, stop. Then continue fulfilling user's request."
  :args (list '(:name "buffer"
                      :type string
                      :description "The buffer to replace contents in.")
@@ -257,7 +257,7 @@ If there is no window in that direction, return nil."
  'eai-tool-library-buffer-tools-maybe-safe
  :function #'eai-tool-library-buffer--remove-region
  :name  "remove-region"
- :description "Remove a region in a buffer with new text. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
+ :description "Remove a region in a buffer. If the buffer does not exist create it, and return an empty string. Note: editing Elisp code in a buffer only changes the buffer text, it does NOT update the running function definitions. To make changes take effect, the user must re-evaluate the modified definitions. Do not attempt to call the modified function immediately after editing its source to verify the edit. After calling this tool, stop. Then continue fulfilling user's request."
  :args (list '(:name "buffer"
                      :type string
                      :description "The buffer to remove contents in.")
@@ -280,7 +280,7 @@ If there is no window in that direction, return nil."
  'eai-tool-library-buffer-tools
  :function #'eai-tool-library-buffer--insert-at
  :name  "insert-at"
- :description "At text in a buffer at a specific location. If the buffer does not exist create it, and return an empty string. After calling this tool, stop. Then continue fulfilling user's request."
+ :description "Insert text in a buffer at a specific location. If the buffer does not exist create it, and return an empty string. Note: editing Elisp code in a buffer only changes the buffer text, it does NOT update the running function definitions. To make changes take effect, the user must re-evaluate the modified definitions. Do not attempt to call the modified function immediately after editing its source to verify the edit. After calling this tool, stop. Then continue fulfilling user's request."
  :args (list '(:name "buffer"
                      :type string
                      :description "The buffer to add contents to.")
