@@ -313,5 +313,184 @@ If there is no window in that direction, return nil."
                      :description "The buffer to switch to."))
  :category "emacs-buffer")
 
+;;; Outline / structure navigation
+
+(defvar eai-tool-library-buffer--outline-ts-node-types
+  '((emacs-lisp-mode . ("function_definition" "list"))
+    (python-ts-mode . ("function_definition" "class_definition" "decorated_definition"))
+    (python-mode . ("function_definition" "class_definition" "decorated_definition"))
+    (c-ts-mode . ("function_definition" "struct_specifier" "enum_specator" "class_specifier"))
+    (c-mode . ("function_definition" "struct_specifier" "enum_specator" "class_specifier"))
+    (rust-ts-mode . ("function_item" "impl_item" "struct_item" "enum_item" "trait_item"))
+    (java-ts-mode . ("class_declaration" "method_declaration" "interface_declaration" "enum_declaration"))
+    (json-ts-mode . ("object" "array"))
+    (yaml-ts-mode . ("block_mapping" "block_sequence"))
+    (html-ts-mode . ("element" "script_element" "style_element"))
+    (nix-ts-mode . ("attrset_expression" "function_expression"))
+    (toml-ts-mode . ("table" "array_table"))
+    (css-ts-mode . ("rule_set" "media_statement"))
+    (typescript-ts-mode . ("function_declaration" "class_declaration" "method_definition" "interface_declaration"))
+    (js-ts-mode . ("function_declaration" "class_declaration" "method_definition")))
+  "Mapping from major mode to tree-sitter node types considered outline items.
+Types listed here will be walked recursively to produce an outline.")
+
+(defun eai-tool-library-buffer--outline-ts (buffer)
+  "Walk tree-sitter nodes in BUFFER to produce outline entries.
+
+Uses `eai-tool-library-buffer--outline-ts-node-types' to determine
+which node types to descend into and report.  Returns a list of
+plists with :name, :type, :from, and :to keys."
+  (with-current-buffer buffer
+    (let* ((modes (list major-mode))
+           (mode (car modes))
+           (types (or (alist-get mode eai-tool-library-buffer--outline-ts-node-types)
+                      (when (string-suffix-p "-ts-mode" (symbol-name mode))
+                        (alist-get (intern (string-remove-suffix "-ts-mode" (symbol-name mode)))
+                                   eai-tool-library-buffer--outline-ts-node-types))))
+           (root (treesit-buffer-root-node))
+           (result nil))
+      (when (and root types)
+        (let ((stack (list root)))
+          (while stack
+            (let* ((node (pop stack))
+                   (node-type (treesit-node-type node)))
+              (cond
+               ((member node-type types)
+                ;; This is an outline node — record it and descend
+                ;; into its children for nested items
+                (let* ((name-node (or (treesit-node-child-by-field-name node "name")
+                                      (treesit-node-child node 0 t)))
+                       (name (when name-node
+                               (treesit-node-text name-node t))))
+                  (push (list :name (or name node-type)
+                              :type node-type
+                              :from (treesit-node-start node)
+                              :to (treesit-node-end node))
+                        result)
+                  (dolist (child (treesit-node-children node t))
+                    (push child stack))))
+               ;; Not an outline type but could contain outline items
+               ;; at deeper nesting levels
+               (t
+                (dolist (child (treesit-node-children node t))
+                  (push child stack))))))))
+      (nreverse result))))
+
+(defun eai-tool-library-buffer--outline-imenu-walk (items prefix result)
+  "Recursively walk imenu ITEMS, prepending PREFIX to names, appending to RESULT.
+Return the final RESULT list (in reverse order, to be nreversed by caller)."
+  (dolist (item items)
+    (cond
+     ((imenu--subalist-p item)
+      (setq result
+            (eai-tool-library-buffer--outline-imenu-walk
+             (cdr item)
+             (if prefix
+                 (concat prefix "/" (car item))
+               (car item))
+             result)))
+     (t
+      (let ((name (car item))
+            (pos (if (overlayp (cdr item))
+                      (overlay-start (cdr item))
+                    (marker-position (cdr item)))))
+        (push (list :name (if prefix (concat prefix "/" name) name)
+                    :type "imenu"
+                    :from pos
+                    :to pos)
+              result)))))
+  result)
+
+(defun eai-tool-library-buffer--outline-imenu (buffer)
+  "Use imenu to produce outline entries for BUFFER.
+
+Returns a flat list of plists with :name, :type, :from, and :to keys.
+Handles nested imenu entries by flattening them with hierarchical names.
+The :to value for each entry is derived by using the :from of the next
+entry, or the buffer end for the last entry."
+  (with-current-buffer buffer
+    (let ((index (imenu-default-create-index-function))
+          (result nil))
+      (setq result (eai-tool-library-buffer--outline-imenu-walk index nil result))
+      (setq result (nreverse result))
+      ;; Fill in :to values: each entry's :to is the :from of the next entry,
+      ;; or point-max for the last entry.  We walk backwards through the
+      ;; ascending-order list, tracking the next entry's :from.
+      (let ((next-pos (point-max)))
+        (dolist (entry (nreverse result))
+          (setf (plist-get entry :to) next-pos)
+          (setq next-pos (plist-get entry :from))))
+      result)))
+
+(defun eai-tool-library-buffer--outline-regex (buffer)
+  "Use outline-regexp and regex matching to produce outline entries for BUFFER.
+
+This is the lowest-quality fallback, used when neither tree-sitter
+nor imenu has useful data.  Returns a flat list of plists."
+  (with-current-buffer buffer
+    (save-excursion
+      (goto-char (point-min))
+      (let ((result nil)
+            (re (or outline-regexp
+                    ;; Generic fallback: common definition patterns
+                    (concat "^\\("
+                            (mapconcat #'identity
+                                       '("defun" "defmacro" "defvar" "defconst"
+                                         "class " "def " "function " "async function"
+                                         "pub fn" "fn " "impl " "struct " "enum "
+                                         "interface " "type " "const "
+                                         "#+\\*+" "#+\\." "^@@")
+                                       "\\|")
+                            "\\)"))))
+        (while (re-search-forward re nil t)
+          (let ((beg (line-beginning-position))
+                (end (line-end-position)))
+            (push (list :name (string-trim (buffer-substring-no-properties beg end))
+                        :type "outline"
+                        :from beg
+                        :to end)
+                  result)))
+        (nreverse result)))))
+
+(defun eai-tool-library-buffer--outline (&optional buffer)
+  "Return a structural outline of BUFFER as a list of plists.
+
+Each plist has :name, :type, :from, and :to keys.  Uses tree-sitter
+when available, falls back to imenu, then to outline-regexp matching."
+  (let* ((buffer (get-buffer-create (or buffer (current-buffer))))
+         (result nil))
+    ;; Try tree-sitter first
+    (with-current-buffer buffer
+      (when (and (fboundp #'treesit-available-p)
+                 (treesit-available-p)
+                 (alist-get major-mode eai-tool-library-buffer--outline-ts-node-types))
+        (condition-case nil
+            (when (treesit-buffer-root-node)
+              (setq result (eai-tool-library-buffer--outline-ts buffer)))
+          (treesit-no-parser nil))))
+    ;; Fallback to imenu
+    (unless result
+      (with-current-buffer buffer
+        (when (or imenu-generic-expression
+                  (and (fboundp #'imenu-default-create-index-function)
+                       ;; Only use imenu if the mode has something useful
+                       (let ((index (imenu-default-create-index-function)))
+                         (and index (> (length index) 0)))))
+          (setq result (eai-tool-library-buffer--outline-imenu buffer)))))
+    ;; Last fallback: regex
+    (unless result
+      (setq result (eai-tool-library-buffer--outline-regex buffer)))
+    result))
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-buffer-tools
+ :function #'eai-tool-library-buffer--outline
+ :name "buffer-outline"
+ :description "Return a structural outline of a buffer as a list of named sections with their byte positions. Uses tree-sitter when available, falls back to imenu, then to outline-regexp matching. Each entry has :name, :type, :from, and :to keys. Useful for navigating large buffers before reading or editing specific regions."
+ :args (list '(:name "buffer"
+                     :type string
+                     :description "The buffer to get the outline of. Uses the current buffer when omitted."
+                     :optional t))
+ :category "emacs-buffer")
+
 (provide 'eai-tool-library-buffer)
 ;;; eai-tool-library-buffer.el ends here
