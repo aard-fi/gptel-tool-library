@@ -47,6 +47,23 @@ The project planning is happening in ${planning-file}.
   :type '(alist :key-type symbol :value-type string)
   :group 'eai-code)
 
+(defcustom eai-code-default-memory
+  "* LLM memory file
+
+This file contains your memory for this project. This file is fully under your control - you can do whatever you want with it."
+  "The default content of new memory files"
+  :type 'string
+  :group 'eai-code)
+
+(defcustom eai-code-default-planning
+  "* Planning for ${project-name}
+
+A blank canvas so far.
+"
+  "The default content of new memory files"
+  :type 'string
+  :group 'eai-code)
+
 (defcustom eai-code-default-backend ""
   "The name of the default backend to use for code sessions"
   :type 'string
@@ -136,13 +153,43 @@ If not in a project, offer to cd elsewhere or init a Git repo. Aborts on user ca
            ((equal choice "abort")
             (user-error "User aborted project setup"))))))))
 
+(defun eai-code--setup-memory ()
+  "Locate the memory file, and create it, if it is empty"
+  (interactive)
+  (let* ((project (project-current))
+         (project-root (project-root project))
+         (memory-file (eai-code--get-special-file 'memory)))
+    (with-current-buffer (find-file-noselect memory-file)
+      (when (= (buffer-size) 0)
+        (insert eai-code-default-memory)
+        (save-buffer))
+      (kill-buffer))))
+
+(defun eai-code--setup-plan ()
+  "Locate the planning file, and create it, if it is empty"
+  (interactive)
+  (let* ((project (project-current))
+         (project-root (project-root project))
+         (planning-file (eai-code--get-special-file 'planning)))
+    (with-current-buffer (find-file-noselect planning-file)
+      (when (= (buffer-size) 0)
+        (let ((insert
+               (s-format eai-code-default-planning 'eai-code--aget
+                         `(("project-name" . ,(project-name project))
+                           ("project-root" . ,(project-root project))
+                           ))))
+          (insert insert)
+          (save-buffer)))
+      (kill-buffer))))
+
 (defun eai-code--find-chat ()
   "Locate the chat file for this project, and set it up as gptel session."
   (interactive)
-  (let* ((project-root (project-root (project-current)))
+  (let* ((project (project-current))
+         (project-root (project-root project))
          (chat-file (eai-code--get-special-file 'chat))
-         (buf (find-file-noselect chat-file)))
-    (with-current-buffer buf
+         (chat-buf (find-file-noselect chat-file)))
+    (with-current-buffer chat-buf
       (make-local-variable 'gptel-prompt-prefix-alist)
       (make-local-variable 'gptel-response-prefix-alist)
 
@@ -157,9 +204,8 @@ If not in a project, offer to cd elsewhere or init a Git repo. Aborts on user ca
         (insert (alist-get 'org-mode gptel-prompt-prefix-alist))
         (insert "\n"))
 
-      (gptel-mode)
-      )
-    (switch-to-buffer buf)))
+      (gptel-mode))
+    (switch-to-buffer chat-buf)))
 
 (defun eai-code (&optional arg)
   "Start a new code agent session.
@@ -170,6 +216,8 @@ the current directory, if it is a project, or prompt."
   (let ((project-dir (when arg
                        (read-directory-name "Select project directory: "))))
     (eai-code--find-or-create-project project-dir)
+    (eai-code--setup-memory)
+    (eai-code--setup-plan)
     (eai-code--find-chat)))
 
 (provide 'eai-code)
