@@ -47,6 +47,15 @@ The project planning is happening in ${planning-file}.
   :type '(alist :key-type symbol :value-type string)
   :group 'eai-code)
 
+(defcustom eai-code-persist-chat nil
+  "Configure chat session persistence.
+
+When set to `t' eai-code will create the chat file specified in
+`eai-code-file-map', othewise it will use a buffer without file
+backing"
+  :type 'boolean
+  :group 'eai-code)
+
 (defcustom eai-code-default-memory
   "* LLM memory file
 
@@ -187,9 +196,22 @@ If not in a project, offer to cd elsewhere or init a Git repo. Aborts on user ca
   (interactive)
   (let* ((project (project-current))
          (project-root (project-root project))
+         (project-name (project-name project))
          (chat-file (eai-code--get-special-file 'chat))
-         (chat-buf (find-file-noselect chat-file)))
+         (chat-buf (if eai-code-persist-chat
+                       (find-file-noselect chat-file)
+                     (get-buffer-create (format "*%s-chat*" project-name)))))
     (with-current-buffer chat-buf
+      ;; this should happen automatically by gptel later on anyway
+      ;; this will remove our buffer local variables, so do that
+      ;; first
+      (unless (derived-mode-p 'org-mode)
+        (org-mode))
+
+      (unless eai-code-persist-chat
+        (setq buffer-offer-save nil)
+        (setq backup-inhibited t))
+
       (setq-local gptel-prompt-prefix-alist (copy-alist gptel-prompt-prefix-alist))
       (setq-local gptel-response-prefix-alist (copy-alist gptel-response-prefix-alist))
 
@@ -213,7 +235,8 @@ If not in a project, offer to cd elsewhere or init a Git repo. Aborts on user ca
         (setq-local gptel-model eai-code-default-model))
 
       (local-set-key (kbd "C-g") #'gptel-abort)
-      (gptel-mode))
+      ;; explicitely enable to avoid toggle
+      (gptel-mode 1))
     (switch-to-buffer chat-buf)))
 
 (defun eai-code (&optional arg)
