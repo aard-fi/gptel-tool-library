@@ -69,27 +69,5 @@
                      :optional t))
  :category "emacs")
 
-(defun eai-tool-library-emacs--get-date ()
-  "Return the current date"
-  (format-time-string "%Y-%m-%d"))
-
-(eai-tool-library-make-tools-and-register
- 'eai-tool-library-emacs-tools
- :function #'eai-tool-library-emacs--get-date
- :name  "get-date"
- :description "Use to get the current date in %Y-%m-%d format. After calling this tool, stop. Then continue fulfilling user's request."
- :category "emacs")
-
-(defun eai-tool-library-emacs--get-time ()
-  "Return the current time"
-  (format-time-string "%H:%M"))
-
-(eai-tool-library-make-tools-and-register
- 'eai-tool-library-emacs-tools
- :function #'eai-tool-library-emacs--get-time
- :name  "get-time"
- :description "Use to get the current time in %H:%M format. After calling this tool, stop. Then continue fulfilling user's request."
- :category "emacs")
-
 (provide 'eai-tool-library-emacs)
 ;;; eai-tool-library-emacs.el ends here

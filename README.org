@@ -1,11 +1,25 @@
 * eai-tool-library                                                  :TOC_4:
   - [[#introduction][Introduction]]
-  - [[#contributing][Contributing]]
+  - [[#installation-and-basic-usage][Installation and basic usage]]
+  - [[#eai-code][eai-code]]
+  - [[#eai-doctor][eai-doctor]]
   - [[#modules][Modules]]
+    - [[#bbdb][bbdb]]
+    - [[#buffer][buffer]]
+    - [[#date-time][date-time]]
+    - [[#elisp][elisp]]
+    - [[#emacs][emacs]]
+    - [[#gnus][gnus]]
+    - [[#os][os]]
+    - [[#outline][outline]]
+    - [[#project][project]]
+    - [[#search-and-replace][search-and-replace]]
+    - [[#url][url]]
     - [[#out-of-tree-modules][Out-of-tree modules]]
     - [[#module-specification][Module specification]]
       - [[#tool-implementation][Tool implementation]]
       - [[#tool-registration][Tool registration]]
+  - [[#contributing][Contributing]]
 
 ** Introduction
 
@@ -19,6 +33,12 @@ Tools are grouped into modules. The main library just sets up loading and unload
 
 #+CAPTION: An emacs frame asking gptel for time, giraffe ascii art, and putting an emoji at a specific buffer position
 [[./pictures/demo.png]]
+
+Additionally =eai-code= contains a project aware entry point into an org-mode based gptel chat for development use.
+
+To check your configuration you can consult =eai-doctor=.
+
+** Installation and basic usage
 
 To install, clone this directory, add it to your load path, and require =eai-tool-library=. You also probably want to load one or more modules:
 
@@ -58,13 +78,98 @@ If =eai-tool-library-debug= is set to =t= (currently default) tool invocations w
 
 Currently pretty much the only other starting point for gptel tools is  [[https://git.bajsicki.com/phil/gptel-org-tools][gptel-org-tools]], and the following functions either are copies or variants of functions defined there: read-file-contents, list-buffers, describe-variable and describe-function. Additionally, many tool descriptions are inspired on the descriptions from there.
 
-** Contributing
+** eai-code
 
-Pull requests are welcome - both to expand existing modules, or adding new ones.
+This is an entry point into a gptel chat buffer, trying to provide extra context useful for a coding agent. Unlike the rest of the library this works only with =gptel=, as the chat functionality there is quite good - and enforces an org-mode chat buffer. It also will only work together with =project.el=.
 
-If you edit this README please make sure you have [[https://github.com/snosov1/toc-org][toc-org]] installed and loaded.
+To use this both gptel and eai-tool-library need to be configured. A sample configuration for the tool library part would be:
+
+#+BEGIN_SRC elisp
+  (setq eai-tool-library-use-maybe-safe t
+        eai-tool-library-max-result-size 4000)
+  (dolist (module '("bbdb" "buffer" "elisp" "emacs" "gnus" "os" "date-time" "project" "outline"))
+    (eai-tool-library-load-module module))
+  (require 'eai-code)
+#+END_SRC
+
+Now you can start a new chat session with =M-x eai-code=. If your current buffer is part of a project it'll start there, otherwise it'll prompt for a project directory. When started with prefix argument it'll always prompt for a project directory. You can also create new directories, and initialise them from there.
+
+The behaviour can be customised through some variables - you can set them manually, or through =M-x customize-group eai-code=.
+
+=eai-code-file-map= contains entries for three files relative to the project directory. Two of those will always be created as soon as =eai-code= starts: a memory file for LLM use (default: =memory.org=), started with the content of =eai-code-default-memory=, and a planning file (default: =planning.org=), started with the content of =eai-code-default-planning=. The third file would be =chat.org=, which is only created when =eai-code-persist-chat= is set to non-nil, which is not recommended. Entries in =eai-code-file-map= are automatically converted into absolute paths based on =project.el= data as needed.
+
+=eai-code-default-backend= takes the name of a configured gptel backend, while =eai-code-default-model= takes the name of a model available on that backend. When omitted gptel globals are used instead. This can be used both for separate models for development, and project specific models. Note that this is just the model the session starts with - normal gptel model switching is still available.
+
+=eai-code-directive= contains a template used for generating a dynamic system prompt. It can contain variables to keep project specific information in the prompt. The following variables are currently supported, in =s-format= notation (${variable}):
+
+| Variable       | Content                                            |
+|----------------+----------------------------------------------------|
+| project-name   | the project name, provided by project.el           |
+| project-root   | the absolut root directory, provided by project.el |
+| memory-file    | the absolute path to the project memory file       |
+| planningg-file | the absolute path to the project planning file    |
+
+** eai-doctor
+
+This is a quick tool, with no dependencies into the rest of the library, to help you check your configuration. You can just =M-x load= the =eai-doctor.el=, and then run =M-x eai-doctor=. It will then check if you have any supported LLM bindings installed and configured, do a few generic system checks, and finally check if everything is in place for outline based file editing.
 
 ** Modules
+*** bbdb
+
+Tools for [[https://savannah.nongnu.org/projects/bbdb/][bbdb v3]]. Currently available are =search= and =anniversary search=.
+
+*** buffer
+
+Tools for buffer manipulation. Currently available are =get filename=, =read buffer=, =read region=, =read appended since last read=, =list buffer=, =erase buffer=, =buffer size=,  =get in direction=, =replace region=, =remove region=, =insert at=, =get buffer create= and =switch buffer=.
+
+=get in direction= is useful with several buffers open - like "summarise the buffer left of this".
+
+The other read and write functions usually should be used as fallback - when available, reading and writing via =outlines= is more reliable, and faster.
+
+*** date-time
+
+Date and time related functions, currently =current date= and =current time=.
+
+*** elisp
+
+Tools useful for working with elisp. Currently available are =fuzzy match= for locating functions/variables by fuzzy matching a name, =describe symbol=, =function doc=, =variable doc=, =smerge replace defun region= and =defun region=.
+
+The doc functions use the builtin documentation. =defun-region= should probably be replaced by the outline module.
+
+There's also the unsafe =eval=, which probably should remain disabled.
+
+*** emacs
+
+This is an old catch all, and probably will be removed eventuall. Currently it has =describe function= and =describe variable=, which are already present in the =elisp= module. Unless you have a good reason don't use this module.
+
+*** gnus
+
+Tools for [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Gnus.html][Gnus]]. Currently only composing email is available - though most models are smart enough to combine that with =bbdb= lookups. It only composes the mail, sending is left to the user.
+
+*** os
+
+Lower level tools. =set current directory= and =get current directory= have limited value, though typically don't hurt to be defined. =read file contents= returns the contents of a file - though in most cases buffer aware tools lead to better results nowadays.
+
+There's also the unsafe =run shell= tool.
+
+*** outline
+
+This module has tools for outline based reading and editing: =get=, =replace section=, =read section=, =insert before= and =insert after=.
+
+It prefers tree-sitter, and falls back to imenu. Outline based editing is a huge advantage over tools like claude code, though currently there are a lot of corner cases where we still get bad edits. This module will probably eventually take over most of the less smart reading and inserting tools from other modules.
+
+*** project
+
+This has tools on top of =project.el=: =current project=, =project files= (including subdirectory limiting), =project buffers=, =project find regexp= and =locate file=.
+
+*** search-and-replace
+
+This is an experimental module for smerge search and replace. For now limited use, unless you want to work on that, and will probably be dropped when that functionality is merged into better modules.
+
+*** url
+
+This has =get url= and =get website= tools. The module may be renamed to a more generic web or internet module.
+
 *** Out-of-tree modules
 
 As long as the module follows the specification described in the next section and is available in the load path it can be loaded/unloaded with this library. This is mainly interesting for bindings tightly coupled to and useless without a specific library.
@@ -153,3 +258,9 @@ The =setq= can be skipped if the variable is known to be non-nil. There's also a
 #+END_SRC
 
 Tools must not prompt for confirmation - unless they're on the unsafe list, in which case they must prompt.
+
+** Contributing
+
+Pull requests are welcome - both to expand existing modules, or adding new ones.
+
+If you edit this README please make sure you have [[https://github.com/snosov1/toc-org][toc-org]] installed and loaded.
