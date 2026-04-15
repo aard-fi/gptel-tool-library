@@ -17,6 +17,9 @@
 
 (require 'eai-tool-library)
 
+(require 'imenu)
+(require 'treesit)
+
 (defvar eai-tool-library-outline-tools '()
   "The list of buffer related tools")
 
@@ -47,6 +50,19 @@ the LLM behaves.")
     (js-ts-mode . ("function_declaration" "class_declaration" "method_definition")))
   "Mapping from major mode to tree-sitter node types considered outline items.
 Types listed here will be walked recursively to produce an outline.")
+
+(defun eai-tool-library-outline--section-separator (buffer)
+  "Return mode-appropriate separator for inserting between sections in BUFFER.
+
+This is just a quick and dirty attempt at preventing code to merge, and needs to
+be refined later on."
+  (with-current-buffer (get-buffer-create buffer)
+    (let ((mode major-mode))
+      (cond
+       ((memq mode '(emacs-lisp-mode lisp-interaction-mode lisp-mode)) "\n\n")
+       ((memq mode '(python-ts-mode python-mode)) "\n\n\n")
+       ((memq mode '(org-mode)) "\n")
+       (t "\n\n\n")))))
 
 (defun eai-tool-library-outline--ts (buffer)
   "Walk tree-sitter nodes in BUFFER to produce outline entries.
@@ -185,7 +201,7 @@ nor imenu has useful data.  Returns a flat list of plists."
                   result)))
         (nreverse result)))))
 
-(defun eai-tool-library-outline- (&optional buffer)
+(defun eai-tool-library-outline--get (&optional buffer)
   "Return a structural outline of BUFFER as a list of plists.
 
 Each plist has :name, :type, :from, and :to keys.  Uses tree-sitter
@@ -204,10 +220,12 @@ when available, falls back to imenu, then to outline-regexp matching."
     ;; Fallback to imenu
     (unless result
       (with-current-buffer buffer
-        (when (or imenu-create-index-function
-                  imenu-generic-expression
-                  (fboundp #'imenu-default-create-index-function))
-          (setq result (eai-tool-library-outline--imenu buffer)))))
+        (condition-case nil
+            (when (or imenu-create-index-function
+                      imenu-generic-expression
+                      (fboundp #'imenu-default-create-index-function))
+              (setq result (eai-tool-library-outline--imenu buffer)))
+          (imenu-unavailable nil))))
     ;; Last fallback: regex
     (unless result
       (setq result (eai-tool-library-outline--regex buffer)))
@@ -220,7 +238,7 @@ Uses `eai-tool-library-outline-' to locate the section by exact name
 match, then replaces the region (:from to :to) with NEW-STRING.
 Returns a message indicating success or failure."
   (let* ((buf (get-buffer-create (or buffer (current-buffer))))
-         (outline (eai-tool-library-outline- buf))
+         (outline (eai-tool-library-outline--get buf))
          (match (seq-find (lambda (entry)
                             (string= (plist-get entry :name) section-name))
                           outline)))
@@ -252,8 +270,8 @@ Returns a message indicating success or failure."
 
 (eai-tool-library-make-tools-and-register
  'eai-tool-library-outline-tools
- :function #'eai-tool-library-outline-
- :name "buffer-outline"
+ :function #'eai-tool-library-outline--get
+ :name "outline-get"
  :description "Return a structural outline of a buffer as a list of named sections with their byte positions. Uses tree-sitter when available, falls back to imenu, then to outline-regexp matching. Each entry has :name, :type, :from, and :to keys. Useful for navigating large buffers before reading or editing specific regions."
  :args (list '(:name "buffer"
                      :type string
@@ -268,7 +286,7 @@ Uses `eai-tool-library-outline-' to locate the section by exact name
 match, then returns the region contents.  Returns an error message if
 the section is not found."
   (let* ((buf (get-buffer-create (or buffer (current-buffer))))
-         (outline (eai-tool-library-outline- buf))
+         (outline (eai-tool-library-outline--get buf))
          (match (seq-find (lambda (entry)
                             (string= (plist-get entry :name) section-name))
                           outline)))
@@ -290,6 +308,80 @@ the section is not found."
              '(:name "section-name"
                      :type string
                      :description "The exact name of the section to read."))
+ :category "emacs-outline")
+
+;;; inserting
+
+(defun eai-tool-library-outline--insert-before (buffer section-name new-string)
+  "Insert NEW-STRING before the outline section named SECTION-NAME in BUFFER.
+
+Uses `eai-tool-library-outline-' to locate the section by exact name match,
+then inserts the new text before the section's :from position.  Mode-appropriate
+whitespace is added automatically around the inserted text."
+  (let* ((buf (get-buffer-create (or buffer (current-buffer))))
+         (outline (eai-tool-library-outline--get buf))
+         (match (seq-find (lambda (entry)
+                            (string= (plist-get entry :name) section-name))
+                          outline)))
+    (if (not match)
+        (format "Section '%s' not found in buffer %s" section-name buffer)
+      (let ((from (plist-get match :from))
+            (sep (eai-tool-library-outline--section-separator buf)))
+        (with-current-buffer buf
+          (goto-char from)
+          (insert (concat sep new-string sep)))
+        (format "Inserted new section before '%s' at position %d in %s" section-name from buffer)))))
+
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-outline-tools-maybe-safe
+ :function #'eai-tool-library-outline--insert-before
+ :name "outline-insert-before"
+ :description "Insert new text before a named outline section in a buffer. Uses the buffer outline to locate the section by exact name match, then inserts the new text before that section's start position. Mode-appropriate whitespace is automatically added around the inserted text. After calling this tool, stop. Then continue fulfilling user's request."
+ :args (list '(:name "buffer"
+                     :type string
+                     :description "The buffer to insert text into.")
+             '(:name "section-name"
+                     :type string
+                     :description "The exact name of the existing section to insert before.")
+             '(:name "new-string"
+                     :type string
+                     :description "The new text to insert."))
+ :category "emacs-outline")
+
+(defun eai-tool-library-outline--insert-after (buffer section-name new-string)
+  "Insert NEW-STRING after the outline section named SECTION-NAME in BUFFER.
+
+Uses `eai-tool-library-outline-' to locate the section by exact name match,
+then inserts the new text after the section's :to position.  Mode-appropriate
+whitespace is added automatically around the inserted text."
+  (let* ((buf (get-buffer-create (or buffer (current-buffer))))
+         (outline (eai-tool-library-outline--get buf))
+         (match (seq-find (lambda (entry)
+                            (string= (plist-get entry :name) section-name))
+                          outline)))
+    (if (not match)
+        (format "Section '%s' not found in buffer %s" section-name buffer)
+      (let ((to (plist-get match :to))
+            (sep (eai-tool-library-outline--section-separator buf)))
+        (with-current-buffer buf
+          (goto-char to)
+          (insert (concat sep new-string sep)))
+        (format "Inserted new section after '%s' at position %d in %s" section-name to buffer)))))
+
+(eai-tool-library-make-tools-and-register
+ 'eai-tool-library-outline-tools-maybe-safe
+ :function #'eai-tool-library-outline--insert-after
+ :name "outline-insert-after"
+ :description "Insert new text after a named outline section in a buffer. Uses the buffer outline to locate the section by exact name match, then inserts the new text after that section's end position. Mode-appropriate whitespace is automatically added around the inserted text. After calling this tool, stop. Then continue fulfilling user's request."
+ :args (list '(:name "buffer"
+                     :type string
+                     :description "The buffer to insert text into.")
+             '(:name "section-name"
+                     :type string
+                     :description "The exact name of the existing section to insert after.")
+             '(:name "new-string"
+                     :type string
+                     :description "The new text to insert."))
  :category "emacs-outline")
 
 (provide 'eai-tool-library-outline)
